@@ -1,0 +1,145 @@
+tourism-village/
+├── public/                     # Aset statis (disajikan apa adanya)
+│   ├── images/                 # Gambar statis (hero, logo partner, ikon PWA)
+│   ├── ios/                    # Ikon apple-touch
+│   └── docs/                   # Dokumen referensi (blueprint & struktur ini)
+│
+├── prisma/                     # Skema database + seed (Prisma + PostgreSQL)
+│   └── schema.prisma           # Model: auth, konten, order, notifikasi
+│
+└── src/
+    ├── app/                    # STRICTLY routing, layouts, dan page entry points
+    │   │                       # (App Router Next.js 16 — tidak berubah)
+    │   ├── (web)/              # Route group web pengunjung (tanpa prefix URL)
+    │   │   ├── (public)/       # Tanpa login: home, tourism, article, about,
+    │   │   │   │               # documentation, terms, user-agreement
+    │   │   │   └── (home)/section/    # Feature module beranda
+    │   │   ├── (auth)/         # login, register, otp, forgot/reset-password
+    │   │   │   └── */section/  # Feature module per halaman
+    │   │   └── (membership)/   # Wajib login: package, checkout, payment/[id],
+    │   │                       # profile, review (+ section/ masing-masing)
+    │   ├── admin/              # Panel admin
+    │   │   ├── (auth)/         # login + profile admin
+    │   │   └── (panel)/        # dashboard, order, tourism, blog, sponsor,
+    │   │                       # review, account — tiap menu punya:
+    │   │                       #   page.tsx    → entry point (setipis mungkin)
+    │   │                       #   decorator/  → komponen domain menu itu
+    │   │                       #   config/     → definisi form/table menu itu
+    │   ├── api/                # Route handlers (REST)
+    │   │   ├── web/            # API publik + user web
+    │   │   ├── admin/          # API panel
+    │   │   ├── cron/           # Endpoint terjadwal (dilindungi CRON_SECRET)
+    │   │   └── upload/         # Upload gambar ke Cloudinary (admin only)
+    │   ├── layout.tsx          # Root layout (font, provider, metadata)
+    │   ├── manifest.ts         # PWA manifest
+    │   ├── loading.tsx / error.tsx / not-found.tsx
+    │   └── proxy.ts berada di src/ (proteksi rute — konvensi Next.js 16)
+    │
+    ├── components/             # GLOBAL shared UI (lintas admin & web)
+    │   ├── i18n/               # translations.ts (id/en), LocaleProvider,
+    │   │                       # LanguageToggle (locale/internasionalisasi)
+    │   └── ui/                 # Primitif UI global
+    │       ├── theme/          # ThemeProvider + ThemeToggle (terang/gelap)
+    │       └── vercel/         # Wrapper @vercel/analytics
+    │
+    ├── features/               # FEATURE MODULES (komponen domain-spesifik)
+    │   ├── admin/              # Fitur panel admin
+    │   │   ├── components/
+    │   │   │   ├── ui/         # form, table, guard, loader, chart/,
+    │   │   │   │               # dev/, editor/ (rich text), icon/ (antd loader)
+    │   │   │   └── layout/     # sider, header, footer, content (shell panel)
+    │   │   ├── hooks/          # session (AdminSessionProvider + useAdminSession)
+    │   │   ├── utils/          # menu (menu+role), error, drawer, image
+    │   │   └── types.ts        # FormLayout & tipe form admin
+    │   └── web/                # Fitur web pengunjung
+    │       ├── components/
+    │       │   ├── ui/         # NotificationBell, scroll-to-top/,
+    │       │   │               # hero-background/
+    │       │   └── layout/     # navbar/, footer/
+    │       ├── hooks/          # session (store sesi + useWebSession)
+    │       ├── utils/          # cart (keranjang), checkoutAccess,
+    │       │                   # paymentAccess, reviewAccess (tiket halaman)
+    │       └── types.ts        # User (profil web)
+    │
+    ├── hooks/                  # Hooks GLOBAL (dipakai lintas feature)
+    │   └── useMounted.ts       # Guard hydration client
+    │
+    ├── lib/                    # Integrasi THIRD-PARTY (client API/secret)
+    │   ├── prisma.ts           # Prisma client singleton + withRetry +
+    │   │                       # REMOTE_TX_OPTIONS (satu file per library)
+    │   ├── auth.ts             # bcrypt, sesi admin/user, rate limit login
+    │   ├── otp.ts              # Mesin OTP (crypto + DB)
+    │   ├── email.ts            # Transport Nodemailer (SMTP)
+    │   ├── midtrans.ts         # Core API Midtrans (charge, status, signature)
+    │   ├── qris.ts             # QR pembayaran QRIS per order
+    │   └── cloudinary.ts       # Signed upload/delete Cloudinary
+    │
+    ├── services/               # DATA-ACCESS layer (dipanggil route/page)
+    │   ├── blog.ts             # Query + cache artikel
+    │   ├── place.ts / package.ts / video.ts / sponsor.ts / review.ts
+    │   ├── order.ts            # Riwayat order user (pagination, filter)
+    │   ├── notification.ts     # Notifikasi in-app user + admin
+    │   └── dashboard.ts        # Agregasi statistik dashboard
+    │
+    ├── utils/                  # Utilitas global (subfolder per kebutuhan)
+    │   ├── config/
+    │   │   └── variables.ts    # Semua env/config aplikasi
+    │   ├── helpers/
+    │   │   └── index.ts        # Fungsi murni digabung satu file:
+    │   │                       # formatRupiah/formatDate, slugify, displayImage
+    │   ├── server/             # Modul khusus server-side
+    │   │   ├── cache.ts        # Invalidasi tag cache publik (revalidateTag)
+    │   │   ├── blogSlug.ts     # Slug blog unik (cek DB)
+    │   │   ├── orderStatus.ts  # Transisi status + audit OrderLog (idempoten)
+    │   │   ├── orderExpiry.ts  # Batas waktu pembayaran + sweep expire
+    │   │   └── orderEvents.ts  # Event order → notifikasi in-app + email
+    │   ├── email/
+    │   │   ├── emailTemplates.ts   # Template HTML email transaksional
+    │   │   ├── otpEmail.ts         # Kirim email OTP
+    │   │   └── credentialEmail.ts  # Kirim kredensial admin baru
+    │   ├── pdf/
+    │   │   └── invoicePdf.ts   # Rakit invoice PDF (jsPDF, client)
+    │   └── fonts/              # Wrapper next/font (google/local)
+    │
+    └── assets/                 # CSS global (Tailwind 4 + tema antd)
+
+CATATAN PENEMPATAN
+------------------
+- src/types/ (global) sengaja tidak dibuat: setelah models/ di-takeout,
+  SEMUA interface tersisa terbukti domain-spesifik sehingga lebih tepat
+  di features/*/types.ts (User → web, FormLayout → admin). Buat src/types/
+  hanya saat muncul interface yang dipakai lintas feature.
+- components/layout/ (global) belum ada isinya — layout admin & web hidup
+  di features/*/components/layout. Tidak membuat folder kosong.
+
+ATURAN PENEMPATAN (ringkas)
+---------------------------
+1. app/            → hanya routing/layout/page/route handler; logika domain
+                     didelegasi ke services/utils/server. Feature module
+                     halaman: section/ (web), decorator/ + config/ (admin)
+                     di DALAM folder routenya.
+2. components/     → hanya UI/konfigurasi global (i18n, ui). UI spesifik
+                     satu domain → features/<domain>/components.
+3. features/<d>/   → components/ui (UI domain), components/layout (shell),
+                     hooks/ (store/hook domain, mis. session), utils/
+                     (helper domain), types.ts (tipe domain).
+4. lib/            → client integrasi pihak ketiga yang memegang secret
+                     (Midtrans, Cloudinary, SMTP) + auth/otp. Dilarang
+                     di-import komponen client murni.
+5. services/       → semua query Prisma + caching data publik. Nama file
+                     = domain (blog.ts, order.ts) tanpa suffix "Service".
+6. utils/          → config/ (env), helpers/ (fungsi murni, satu index.ts),
+                     server/ (modul server-side), email/, pdf/, fonts/.
+7. hooks/          → hook React global.
+8. Konvensi antd + Tailwind: className Tailwind pada komponen antd wajib
+   diakhiri "!" (important) atau dibungkus div — style antd lebih spesifik.
+9. Navigasi        → useRouter (next/navigation), bukan <Link> next/link.
+
+Pemetaan ke blueprint umum (structure-project.txt):
+  app/        → app/ (sama, tidak berubah)
+  components/ → components/ (ui, i18n) + hooks/ + features/*/components
+  features/   → features/admin + features/web (components, utils, types)
+  services/   → services/ (data access)
+  lib/        → lib/ (midtrans, cloudinary, email) + utils/server (db, cache)
+  types/      → features/*/types.ts (domain) — src/types bila ada yang global
+  utils/      → utils/ (config, helpers, email, pdf) 
