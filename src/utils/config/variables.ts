@@ -36,6 +36,8 @@ export const SPOTIFY_SCOPES = [
   "user-follow-read",
   "playlist-read-private",
   "playlist-read-collaborative",
+  "user-read-playback-state",
+  "user-read-currently-playing",
 ].join(" ");
 
 export const isSpotifyConfigured = (): boolean => SPOTIFY_CLIENT_ID.length > 0;

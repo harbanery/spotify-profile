@@ -3,6 +3,8 @@ export interface Track {
   title: string;
   artist: string;
   album: string;
+  /** Cover album (URL Spotify CDN) — tidak ada pada data dummy. */
+  image?: string;
   /** Durasi dalam detik. */
   duration: number;
   /** Jumlah pemutaran (dummy) — tidak tersedia di Spotify Web API. */

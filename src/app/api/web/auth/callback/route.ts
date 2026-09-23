@@ -7,13 +7,13 @@ import {
   resolveWebOrigin,
 } from "@/lib/spotify";
 
-/** Redirect ke halaman login dengan penanda error yang aman untuk URL. */
+/** Redirect ke beranda dengan penanda error yang aman untuk URL. */
 const redirectWithError = (
   request: NextRequest,
   reason: string,
 ): NextResponse =>
   NextResponse.redirect(
-    new URL(`/login?auth_error=${reason}`, resolveWebOrigin(request)),
+    new URL(`/?auth_error=${reason}`, resolveWebOrigin(request)),
   );
 
 /**

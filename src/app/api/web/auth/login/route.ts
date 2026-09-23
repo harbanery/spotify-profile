@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   if (!isSpotifyConfigured()) {
     return NextResponse.redirect(
-      new URL("/login?auth_error=unconfigured", origin),
+      new URL("/?auth_error=unconfigured", origin),
     );
   }
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       auth_error: "unregistered_origin",
       origin,
     });
-    return NextResponse.redirect(new URL(`/login?${params}`, origin));
+    return NextResponse.redirect(new URL(`/?${params}`, origin));
   }
 
   const verifier = generateCodeVerifier();

@@ -7,7 +7,7 @@ export interface SpotifyTrackItem {
   name: string;
   duration_ms: number;
   artists: Array<{ name: string }>;
-  album?: { name: string };
+  album?: { name: string; images?: Array<{ url: string }> };
 }
 
 /** Map track Spotify ke tipe domain; plays tidak tersedia di Web API. */
@@ -16,6 +16,7 @@ export const mapSpotifyTrack = (track: SpotifyTrackItem): Track => ({
   title: track.name,
   artist: track.artists.map((artist) => artist.name).join(", "),
   album: track.album?.name ?? "",
+  image: track.album?.images?.[0]?.url,
   duration: Math.round(track.duration_ms / 1000),
 });
 

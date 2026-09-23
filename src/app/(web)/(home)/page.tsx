@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import ProfileSection from "./section/ProfileSection";
 import ProfileBodySection from "./section/ProfileBodySection";
+import LoginGateSection from "./section/LoginGateSection";
 import { getProfile } from "@/services/profile";
 import { getPublicPlaylists } from "@/services/playlist";
 import { getTopTracks } from "@/services/track";
@@ -15,13 +15,22 @@ export const metadata: Metadata = {
 
 /**
  * Entry point beranda — setipis mungkin, data dari services.
- * Beranda statistik wajib login Spotify (proteksi cepat juga di proxy.ts);
- * token kedaluwarsa disegarkan route handler lewat refresh token.
+ * Belum login → gerbang login satu layar (LoginGateSection); pesan error
+ * alur OAuth datang via ?auth_error=... Setelah login → statistik personal
+ * (token kedaluwarsa disegarkan route handler lewat refresh token).
  */
-export default async function HomePage() {
-  const session = await readSpotifySession();
+export default async function HomePage({
+  searchParams,
+}: PageProps<"/">) {
+  const [{ auth_error: authError, origin }, session] = await Promise.all([
+    searchParams,
+    readSpotifySession(),
+  ]);
+
   if (!isSessionViable(session)) {
-    redirect("/login");
+    const error = Array.isArray(authError) ? authError[0] : authError;
+    const originValue = Array.isArray(origin) ? origin[0] : origin;
+    return <LoginGateSection authError={error} origin={originValue} />;
   }
 
   return (

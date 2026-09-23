@@ -17,7 +17,7 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
     "Halaman ini dibuka dari origin yang belum terdaftar di Spotify.",
 };
 
-interface LoginSectionProps {
+interface LoginGateSectionProps {
   authError?: string;
   /** Origin yang ditolak (untuk pesan unregistered_origin). */
   origin?: string;
@@ -30,12 +30,14 @@ const safeOrigin = (origin?: string): string | null => {
 };
 
 /**
- * Halaman login ala Spotify, satu layar penuh (h-screen): logo, ajakan
- * masuk, tombol OAuth, dan pesan error bila alur login gagal.
- * Web ini read-only — hanya membaca statistik (lagu, artis, playlist),
- * tidak melakukan pemutaran maupun perubahan pada akun.
+ * Gerbang login di beranda: tampilan ala halaman login satu layar penuh
+ * (h-screen) saat belum login Spotify — statistik personal muncul setelah
+ * masuk. Web ini read-only, bukan media player.
  */
-export default function LoginSection({ authError, origin }: LoginSectionProps) {
+export default function LoginGateSection({
+  authError,
+  origin,
+}: LoginGateSectionProps) {
   const rejectedOrigin = safeOrigin(origin);
   const errorMessage = authError
     ? (AUTH_ERROR_MESSAGES[authError] ?? AUTH_ERROR_MESSAGES.invalid_callback)
@@ -58,7 +60,8 @@ export default function LoginSection({ authError, origin }: LoginSectionProps) {
           </h1>
           <p className="text-sm text-subdued">
             Masuk dengan akun Spotify untuk melihat statistik personalmu: lagu
-            dan artis teratas, serta playlist yang sering kamu dengar.
+            yang sedang diputar, lagu dan artis teratas, serta playlist yang
+            sering kamu dengar.
           </p>
         </div>
 

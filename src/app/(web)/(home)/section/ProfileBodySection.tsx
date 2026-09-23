@@ -6,6 +6,8 @@ import ArtistCard from "@/features/web/components/ui/ArtistCard";
 import PlaylistCard from "@/features/web/components/ui/PlaylistCard";
 import MediaRow from "@/features/web/components/ui/MediaRow";
 import TrackTable from "@/features/web/components/ui/TrackTable";
+import NowPlayingCard from "@/features/web/components/ui/NowPlayingCard";
+import type { NowPlaying } from "@/services/player";
 import { useWebSession } from "@/features/web/hooks/session";
 import type { Artist, Playlist, Track } from "@/features/web/types";
 
@@ -20,6 +22,7 @@ type Tab = "all" | "playlists" | "artists";
 
 /** Data live Spotify; slice yang gagal diambil tetap undefined (fallback dummy). */
 interface LiveData {
+  nowPlaying?: NowPlaying | null;
   tracks?: Track[];
   artists?: Artist[];
   playlists?: Playlist[];
@@ -55,12 +58,16 @@ export default function ProfileBodySection({
     };
 
     Promise.all([
+      getJson<{ nowPlaying: NowPlaying | null }>(
+        "/api/web/spotify/now-playing",
+      ),
       getJson<{ tracks: Track[] }>("/api/web/spotify/top-tracks"),
       getJson<{ artists: Artist[] }>("/api/web/spotify/top-artists"),
       getJson<{ playlists: Playlist[] }>("/api/web/spotify/playlists"),
-    ]).then(([tracks, artistsData, playlistsData]) => {
+    ]).then(([nowPlaying, tracks, artistsData, playlistsData]) => {
       if (cancelled) return;
       setLive({
+        nowPlaying: nowPlaying?.nowPlaying,
         tracks: tracks?.tracks,
         artists: artistsData?.artists,
         playlists: playlistsData?.playlists,
@@ -74,10 +81,18 @@ export default function ProfileBodySection({
 
   const topTrackList = live?.tracks ?? topTracks;
   const artistList = live?.artists ?? artists;
-  const playlistList = live?.playlists ?? playlists;
+  // Spotify API tidak menyediakan jumlah pemutaran per playlist —
+  // tampilkan 5 playlist teratas milik user.
+  const playlistList = (live?.playlists ?? playlists).slice(0, 5);
 
   return (
     <div className="space-y-10 px-4 pb-24 md:px-6">
+      {live?.nowPlaying ? (
+        <section>
+          <NowPlayingCard nowPlaying={live.nowPlaying} />
+        </section>
+      ) : null}
+
       <section className="space-y-4">
         <SectionHeader title="Top tracks this month" />
         <TrackTable tracks={topTrackList} />
