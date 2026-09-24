@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import ProfileSection from "./section/ProfileSection";
+import NowPlayingSection from "./section/NowPlayingSection";
 import ProfileBodySection from "./section/ProfileBodySection";
 import LoginGateSection from "./section/LoginGateSection";
+import WebFooter from "@/features/web/components/layout/footer/WebFooter";
 import { getProfile } from "@/services/profile";
 import { getPublicPlaylists } from "@/services/playlist";
 import { getTopTracks } from "@/services/track";
@@ -35,10 +37,12 @@ export default async function HomePage({
   return (
     <div>
       <ProfileSection user={getProfile()} />
+      <NowPlayingSection />
       <ProfileBodySection
         topTracks={getTopTracks(5)}
         playlists={getPublicPlaylists()}
       />
+      <WebFooter />
     </div>
   );
 }

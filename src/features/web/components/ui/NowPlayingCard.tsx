@@ -1,83 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { NowPlaying } from "@/services/player";
-import { displayImage, formatDuration } from "@/utils/helpers";
+import { displayImage } from "@/utils/helpers";
 
 interface NowPlayingCardProps {
   nowPlaying: NowPlaying;
 }
 
 /**
- * Kartu lagu yang sedang diputar: cover, judul, progres berjalan ( animasi
- * 1 detik dari snapshot progressMs), dan status playing/paused.
+ * Kartu lagu yang sedang diputar — layout horizontal: cover ukuran
+ * besar di kiri, teks di kanan (label "Now playing" dengan dot berkedip
+ * hanya di label — bukan di sudut gambar — atau "Last playing" saat
+ * jeda, lalu judul lagu dan artis di bawahnya). Tanpa durasi dan bar
+ * progres; data segar (lagu berganti/play/pause) dijaga section lewat
+ * polling. Lebar sebesar tablet (max-w-2xl); posisi tengah ditangani
+ * section pembungkusnya.
  */
 export default function NowPlayingCard({ nowPlaying }: NowPlayingCardProps) {
   const { track, isPlaying } = nowPlaying;
-  // Snapshot progressMs diambil sekali per mount (tidak berubah); tick
-  // bertambah tiap detik via interval sehingga setState hanya di callback.
-  const [tickMs, setTickMs] = useState(0);
-
-  useEffect(() => {
-    if (!isPlaying) return;
-
-    const startedAt = Date.now();
-    const timer = setInterval(() => {
-      setTickMs(Date.now() - startedAt);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isPlaying, nowPlaying.progressMs]);
-
-  const progressMs = isPlaying
-    ? Math.min(nowPlaying.progressMs + tickMs, track.duration * 1000)
-    : nowPlaying.progressMs;
-
-  const progressPercent = Math.min(
-    100,
-    (progressMs / Math.max(track.duration * 1000, 1)) * 100,
-  );
 
   return (
-    <div className="flex items-center gap-4 rounded-lg bg-elevated p-4">
-      <div className="relative shrink-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={displayImage(track.image, "/images/covers/cover-1.svg")}
-          alt={`Cover ${track.album || track.title}`}
-          width={96}
-          height={96}
-          className="size-20 rounded object-cover shadow-lg md:size-24"
-        />
-        <span
-          className={`absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full shadow ${
-            isPlaying ? "animate-pulse bg-spotify" : "bg-raised"
+    <div className="flex w-full max-w-2xl items-center gap-6">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={displayImage(track.image, "/images/covers/cover-1.svg")}
+        alt={`Cover ${track.album || track.title}`}
+        width={256}
+        height={256}
+        className="size-32 shrink-0 rounded-xl object-cover shadow-2xl md:size-64"
+      />
+
+      <div className="min-w-0 h-full flex flex-col gap-4 justify-between">
+        <p
+          className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wide ${
+            isPlaying ? "text-spotify" : "text-subdued"
           }`}
-          aria-label={isPlaying ? "Playing" : "Paused"}
-        />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-bold uppercase tracking-wide text-spotify">
-          {isPlaying ? "Now playing" : "Paused"}
-        </p>
-        <p className="mt-1 truncate text-base font-semibold text-white md:text-lg">
-          {track.title}
-        </p>
-        <p className="truncate text-sm text-subdued">{track.artist}</p>
-
-        <div className="mt-3 flex items-center gap-2">
-          <span className="w-10 text-right text-xs tabular-nums text-subdued">
-            {formatDuration(Math.floor(progressMs / 1000))}
-          </span>
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-raised">
-            <div
-              className="h-full rounded-full bg-spotify"
-              style={{ width: `${progressPercent}%` }}
+        >
+          {isPlaying ? (
+            <span
+              className="size-2 animate-pulse rounded-full bg-spotify"
+              aria-hidden
             />
-          </div>
-          <span className="w-10 text-xs tabular-nums text-subdued">
-            {formatDuration(track.duration)}
-          </span>
+          ) : null}
+          {isPlaying ? "Now playing" : "Last playing"}
+        </p>
+        <div className="min-w-0">
+          <p className="mt-1 truncate text-xl font-bold text-white md:text-2xl">
+            {track.title}
+          </p>
+          <p className="truncate text-sm text-subdued">{track.artist}</p>
         </div>
       </div>
     </div>

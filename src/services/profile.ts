@@ -27,10 +27,32 @@ interface SpotifyMe {
   followers?: { total?: number };
 }
 
-/** Bentuk mentah GET /me/following (total yang diikuti). */
+/** Bentuk mentah GET /me/following (total artis yang diikuti). */
 interface SpotifyFollowing {
   artists?: { total?: number };
 }
+
+/**
+ * Jumlah artis yang diikuti user (GET /me/following?type=artist).
+ * Di-retry sekali karena panggilan ini paling rentan kena rate limit
+ * saat berjalan paralel dengan /me dan /me/playlists — tanpa retry,
+ * kegagalan sesaat membuat profil menampilkan "0 following".
+ * Catatan: Spotify Web API hanya menyediakan jumlah ARTIS yang diikuti;
+ * jumlah following di profil resmi Spotify (teman/user) tidak diekspos
+ * API publik, jadi angka ini adalah yang terdekat tersedia.
+ */
+const getFollowingCount = async (accessToken: string): Promise<number> => {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const data = await fetchSpotifyApi<SpotifyFollowing>(
+      "/me/following?type=artist&limit=1",
+      accessToken,
+    );
+    if (typeof data?.artists?.total === "number") {
+      return data.artists.total;
+    }
+  }
+  return 0;
+};
 
 /** Bentuk mentah GET /me/playlists (total playlist milik user). */
 interface SpotifyPlaylistPage {
@@ -46,10 +68,7 @@ export const getMyProfile = async (
 ): Promise<UserProfile | null> => {
   const [me, following, playlists] = await Promise.all([
     fetchSpotifyApi<SpotifyMe>("/me", accessToken),
-    fetchSpotifyApi<SpotifyFollowing>(
-      "/me/following?type=artist&limit=1",
-      accessToken,
-    ),
+    getFollowingCount(accessToken),
     fetchSpotifyApi<SpotifyPlaylistPage>("/me/playlists?limit=1", accessToken),
   ]);
   if (!me) return null;
@@ -60,7 +79,7 @@ export const getMyProfile = async (
     handle: me.email ? `@${me.email.split("@")[0]}` : `@${me.id.slice(0, 10)}`,
     avatar: displayImage(me.images?.[0]?.url, "/images/avatar.svg"),
     followers: me.followers?.total ?? 0,
-    following: following?.artists?.total ?? 0,
+    following,
     publicPlaylists: playlists?.total ?? 0,
   };
 };
