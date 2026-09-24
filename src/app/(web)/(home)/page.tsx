@@ -41,7 +41,7 @@ export default async function HomePage({
       <NowPlayingSection />
       <ProfileBodySection
         topTracks={getTopTracks(5)}
-        topArtists={getTopArtists(3)}
+        topArtists={getTopArtists(5)}
         playlists={getPublicPlaylists()}
       />
       <WebFooter />

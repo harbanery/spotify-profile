@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "antd";
+import { Button, Empty, Spin } from "antd";
+import {
+  CustomerServiceOutlined,
+  TeamOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
 import SectionHeader from "@/features/web/components/ui/SectionHeader";
 import TrackList from "@/features/web/components/ui/TrackList";
 import PlaylistList from "@/features/web/components/ui/PlaylistList";
@@ -16,7 +21,7 @@ interface ProfileBodySectionProps {
   playlists: Playlist[];
 }
 
-/** Data live Spotify; slice yang gagal diambil tetap undefined (fallback dummy). */
+/** Data live Spotify; slice yang gagal diambil menjadi [] (state empty). */
 interface LiveData {
   tracks?: Track[];
   artists?: Artist[];
@@ -32,16 +37,18 @@ const TIME_RANGE_TERMS: Array<{ label: string; value: TimeRange }> = [
 ];
 
 /**
- * Statistik pendengaran di bawah kartu now playing: top tracks (list),
- * top artists (3 kartu horizontal, foto bulat di atas nama di bawah),
- * dan top playlists (list) — semua height auto (bukan satu layar penuh),
- * lebar sebesar laptop (max-w-4xl). Filter rentang waktu digabung satu
- * di paling atas (antd Button round ala tombol login/logout, className
- * Tailwind wajib berakhiran "!" sesuai konvensi proyek) dan berlaku ke
- * top tracks + top artists; playlist tidak difilter karena Spotify API
- * tidak punya konsep waktu pada playlist — pemeringkatannya internal
- * (lihat services/playlist.ts → getMyTopPlaylists). Saat login, data
- * live menggantikan dummy per-section.
+ * Statistik pendengaran di bawah kartu now playing, lebar max-w-4xl di
+ * tengah: top artists (5 kartu horizontal, foto bulat atas + nama tengah,
+ * judul & data terpusat), lalu top tracks (kiri) dan top playlists
+ * (kanan) digabung grid dua kolom pada resolusi laptop — tablet/hp
+ * turun menjadi satu kolom. Semua section (artists, tracks, playlists)
+ * punya state loading (antd Spin) dan empty (antd Empty, ikon sesuai
+ * section) dengan height mengikuti total data. Filter rentang waktu
+ * satu di paling atas (antd Button
+ * round, className Tailwind wajib berakhiran "!" sesuai konvensi proyek)
+ * dan berlaku ke top tracks + top artists; playlist tidak difilter
+ * karena Spotify API tidak punya konsep waktu pada playlist —
+ * pemeringkatannya internal (services/playlist.ts → getMyTopPlaylists).
  */
 export default function ProfileBodySection({
   topTracks,
@@ -53,7 +60,6 @@ export default function ProfileBodySection({
   const [live, setLive] = useState<LiveData | null>(null);
 
   useEffect(() => {
-    // Reset/dummy cukup lewat render turunan: live?.tracks ?? topTracks.
     if (status !== "authenticated") return;
 
     let cancelled = false;
@@ -79,8 +85,9 @@ export default function ProfileBodySection({
       if (cancelled) return;
       setLive((prev) => ({
         ...prev,
-        tracks: tracks?.tracks ?? prev?.tracks,
-        artists: artists?.artists ?? prev?.artists,
+        // Gagal ambil → [] (empty state per section).
+        tracks: tracks?.tracks ?? prev?.tracks ?? [],
+        artists: artists?.artists ?? prev?.artists ?? [],
       }));
     });
 
@@ -96,8 +103,11 @@ export default function ProfileBodySection({
     fetch("/api/web/spotify/playlists")
       .then((response) => (response.ok ? response.json() : undefined))
       .then((data: { playlists?: Playlist[] } | undefined) => {
-        if (cancelled || !data?.playlists) return;
-        setLive((prev) => ({ ...prev, playlists: data.playlists }));
+        if (cancelled) return;
+        setLive((prev) => ({
+          ...prev,
+          playlists: data?.playlists ?? prev?.playlists ?? [],
+        }));
       })
       .catch(() => undefined);
 
@@ -106,12 +116,18 @@ export default function ProfileBodySection({
     };
   }, [status]);
 
+  // Loading hanya saat sesi login aktif dan data live belum sempat tiba.
+  const tracksLoading =
+    status === "authenticated" && live?.tracks === undefined;
+  const artistsLoading =
+    status === "authenticated" && live?.artists === undefined;
+  const playlistsLoading =
+    status === "authenticated" && live?.playlists === undefined;
+
   const topTrackList = live?.tracks ?? topTracks;
-  const topArtistList = (live?.artists ?? topArtists).slice(0, 3);
+  const topArtistList = (live?.artists ?? topArtists).slice(0, 5);
   // Playlist terurut frekuensi dengar (skor track favorit di dalamnya).
   const playlistList = (live?.playlists ?? playlists).slice(0, 5);
-
-  console.log({ topTrackList, playlistList });
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-10 px-4 pb-24 md:px-6">
@@ -133,24 +149,65 @@ export default function ProfileBodySection({
         ))}
       </div>
 
-      <section className="space-y-4">
-        <SectionHeader title="Top tracks" />
-        <TrackList tracks={topTrackList} />
+      <section className="space-y-4 text-center">
+        <h2 className="text-xl font-bold tracking-tight text-white md:text-2xl">
+          Top artists
+        </h2>
+        {artistsLoading ? (
+          <div className="flex justify-center py-8">
+            <Spin />
+          </div>
+        ) : topArtistList.length === 0 ? (
+          <Empty
+            image={<TeamOutlined className="text-5xl! text-subdued!" />}
+            description="No top artists yet"
+          />
+        ) : (
+          <div className="flex justify-center gap-4">
+            {topArtistList.map((artist) => (
+              <ArtistCard key={artist.id} artist={artist} />
+            ))}
+          </div>
+        )}
       </section>
 
-      <section className="space-y-4">
-        <SectionHeader title="Top artists" />
-        <div className="flex gap-4">
-          {topArtistList.map((artist) => (
-            <ArtistCard key={artist.id} artist={artist} />
-          ))}
-        </div>
-      </section>
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
+        <section className="min-w-0 space-y-4">
+          <SectionHeader title="Top tracks" />
+          {tracksLoading ? (
+            <div className="flex justify-center py-8">
+              <Spin />
+            </div>
+          ) : topTrackList.length === 0 ? (
+            <Empty
+              image={
+                <CustomerServiceOutlined className="text-5xl! text-subdued!" />
+              }
+              description="No top tracks yet"
+            />
+          ) : (
+            <TrackList tracks={topTrackList} />
+          )}
+        </section>
 
-      <section className="space-y-4">
-        <SectionHeader title="Top playlists" />
-        <PlaylistList playlists={playlistList} />
-      </section>
+        <section className="min-w-0 space-y-4">
+          <SectionHeader title="Top playlists" />
+          {playlistsLoading ? (
+            <div className="flex justify-center py-8">
+              <Spin />
+            </div>
+          ) : playlistList.length === 0 ? (
+            <Empty
+              image={
+                <UnorderedListOutlined className="text-5xl! text-subdued!" />
+              }
+              description="No playlists yet"
+            />
+          ) : (
+            <PlaylistList playlists={playlistList} />
+          )}
+        </section>
+      </div>
     </div>
   );
 }

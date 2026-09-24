@@ -6,7 +6,7 @@ const TIME_RANGES = ["short_term", "long_term"] as const;
 type TimeRange = (typeof TIME_RANGES)[number];
 
 /**
- * Top 3 artists user yang login; rentang waktu dikontrol query
+ * Top 5 artists user yang login; rentang waktu dikontrol query
  * ?time_range= (short_term ±4 minggu, long_term ±1 tahun; default
  * short_term) — mengikuti filter term gabungan di halaman home.
  */
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       ? (requested as TimeRange)
       : "short_term";
 
-  const artists = await getMyTopArtists(accessToken, 3, timeRange);
+  const artists = await getMyTopArtists(accessToken, 5, timeRange);
   if (!artists) {
     return Response.json({ error: "spotify_unavailable" }, { status: 502 });
   }

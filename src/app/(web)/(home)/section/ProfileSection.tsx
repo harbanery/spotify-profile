@@ -11,17 +11,16 @@ interface ProfileSectionProps {
 }
 
 /**
- * Header profil ala Spotify: avatar bulat besar di atas gradasi biru,
- * konten selebar max-w-5xl di tengah. Saat login, data dummy diganti
- * profil akun Spotify asli pengguna. Kartu "Now Playing" hidup di
- * section terpisah (NowPlayingSection); tombol login/logout ada di
- * WebNavbar (fixed, mengikuti scroll).
+ * Header profil ala Spotify: avatar bulat besar di atas gradasi hijau
+ * (warna primer Spotify), konten selebar max-w-4xl di tengah. Saat
+ * login, data dummy diganti profil akun Spotify asli pengguna. Kartu
+ * "Now Playing" hidup di section terpisah (NowPlayingSection); tombol
+ * login/logout ada di WebNavbar (fixed, mengikuti scroll).
  */
 export default function ProfileSection({ user }: ProfileSectionProps) {
   const { status, user: sessionUser } = useWebSession();
   const profile =
     status === "authenticated" && sessionUser ? sessionUser : user;
-  console.log({ profile });
 
   return (
     <section className="relative overflow-hidden">
