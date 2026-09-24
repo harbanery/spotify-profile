@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "antd";
+import { Button, ButtonProps } from "antd";
 import { LoginOutlined, LogoutOutlined } from "@ant-design/icons";
 import { useMounted } from "@/hooks/useMounted";
 import { useWebSession } from "@/features/web/hooks/session";
@@ -18,41 +18,39 @@ export default function SpotifyLoginButton({
 }) {
   const { status } = useWebSession();
   const mounted = useMounted();
+  let buttonProps: ButtonProps = {};
+  let buttonLabel: string = "";
 
   if (!mounted || status === "loading") {
-    return (
-      <div
-        className="h-8 w-36 animate-pulse rounded-full bg-white/10"
-        aria-hidden
-      />
-    );
-  }
-
-  if (status === "authenticated") {
-    return (
-      <Button
-        type="default"
-        shape="round"
-        size={size}
-        href="/api/web/auth/logout"
-        icon={<LogoutOutlined />}
-        className="border-white/30! bg-transparent! text-white! hover:border-white! hover:text-white!"
-      >
-        Log out
-      </Button>
-    );
+    buttonProps = {
+      type: "default",
+      loading: true,
+      disabled: true,
+    };
+    buttonLabel = "Loading...";
+  } else if (status === "authenticated") {
+    buttonProps = {
+      type: "default",
+      href: "/api/web/auth/logout",
+      icon: <LogoutOutlined />,
+      className:
+        "border-white/30! bg-transparent! text-white! hover:border-white! hover:text-white!",
+    };
+    buttonLabel = "Log out";
+  } else {
+    buttonProps = {
+      type: "primary",
+      href: "/api/web/auth/login",
+      icon: <LoginOutlined />,
+      className:
+        "bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!",
+    };
+    buttonLabel = "Log in with Spotify";
   }
 
   return (
-    <Button
-      type="primary"
-      shape="round"
-      size={size}
-      href="/api/web/auth/login"
-      icon={<LoginOutlined />}
-      className="bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!"
-    >
-      Log in with Spotify
+    <Button {...buttonProps} shape="round" size={size}>
+      {buttonLabel ?? ""}
     </Button>
   );
 }

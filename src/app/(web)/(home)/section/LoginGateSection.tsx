@@ -67,7 +67,12 @@ export default function LoginGateSection({
 
         {errorMessage ? (
           <div className="w-full">
-            <Alert type="error" showIcon message={errorMessage} description={detail} />
+            <Alert
+              type="error"
+              showIcon
+              message={errorMessage}
+              description={detail}
+            />
           </div>
         ) : null}
 

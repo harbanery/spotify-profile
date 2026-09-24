@@ -5,7 +5,6 @@ import LoginGateSection from "./section/LoginGateSection";
 import { getProfile } from "@/services/profile";
 import { getPublicPlaylists } from "@/services/playlist";
 import { getTopTracks } from "@/services/track";
-import { getArtists } from "@/services/artist";
 import { isSessionViable, readSpotifySession } from "@/lib/spotify";
 import { OWNER_NAME } from "@/utils/config/variables";
 
@@ -38,7 +37,6 @@ export default async function HomePage({
       <ProfileSection user={getProfile()} />
       <ProfileBodySection
         topTracks={getTopTracks(5)}
-        artists={getArtists()}
         playlists={getPublicPlaylists()}
       />
     </div>
