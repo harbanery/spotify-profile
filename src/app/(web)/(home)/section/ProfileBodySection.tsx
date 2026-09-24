@@ -5,18 +5,21 @@ import { Button } from "antd";
 import SectionHeader from "@/features/web/components/ui/SectionHeader";
 import TrackList from "@/features/web/components/ui/TrackList";
 import PlaylistList from "@/features/web/components/ui/PlaylistList";
+import ArtistCard from "@/features/web/components/ui/ArtistCard";
 import { useWebSession } from "@/features/web/hooks/session";
-import type { Playlist, Track } from "@/features/web/types";
+import type { Artist, Playlist, Track } from "@/features/web/types";
 
 interface ProfileBodySectionProps {
   /** Data dummy untuk pengunjung yang belum login Spotify. */
   topTracks: Track[];
+  topArtists: Artist[];
   playlists: Playlist[];
 }
 
 /** Data live Spotify; slice yang gagal diambil tetap undefined (fallback dummy). */
 interface LiveData {
   tracks?: Track[];
+  artists?: Artist[];
   playlists?: Playlist[];
 }
 
@@ -29,18 +32,20 @@ const TIME_RANGE_TERMS: Array<{ label: string; value: TimeRange }> = [
 ];
 
 /**
- * Statistik pendengaran di bawah kartu now playing: top tracks dan top
- * playlists masing-masing menjadi satu layar penuh (min-h-screen) yang
- * diposisikan tengah, satu kolom (bukan grid dua kolom), lebar sebesar
- * laptop (max-w-4xl). Filter rentang waktu memakai antd Button round ala
- * tombol login/logout (className Tailwind wajib berakhiran "!" sesuai
- * konvensi proyek); playlist tidak difilter karena Spotify API tidak
- * punya konsep waktu pada playlist — datanya playlist user yang paling
- * relevan/sering dipakai. Saat login, data live menggantikan dummy; top
- * tracks diambil ulang mengikuti rentang waktu.
+ * Statistik pendengaran di bawah kartu now playing: top tracks (list),
+ * top artists (3 kartu horizontal, foto bulat di atas nama di bawah),
+ * dan top playlists (list) — semua height auto (bukan satu layar penuh),
+ * lebar sebesar laptop (max-w-4xl). Filter rentang waktu digabung satu
+ * di paling atas (antd Button round ala tombol login/logout, className
+ * Tailwind wajib berakhiran "!" sesuai konvensi proyek) dan berlaku ke
+ * top tracks + top artists; playlist tidak difilter karena Spotify API
+ * tidak punya konsep waktu pada playlist — pemeringkatannya internal
+ * (lihat services/playlist.ts → getMyTopPlaylists). Saat login, data
+ * live menggantikan dummy per-section.
  */
 export default function ProfileBodySection({
   topTracks,
+  topArtists,
   playlists,
 }: ProfileBodySectionProps) {
   const { status } = useWebSession();
@@ -62,12 +67,21 @@ export default function ProfileBodySection({
       }
     };
 
-    // Rentang waktu hanya berlaku pada top tracks; playlist tetap.
-    getJson<{ tracks: Track[] }>(
-      `/api/web/spotify/top-tracks?time_range=${timeRange}`,
-    ).then((tracks) => {
-      if (cancelled || !tracks?.tracks) return;
-      setLive((prev) => ({ ...prev, tracks: tracks.tracks }));
+    // Rentang waktu berlaku pada top tracks dan top artists; playlist tetap.
+    Promise.all([
+      getJson<{ tracks: Track[] }>(
+        `/api/web/spotify/top-tracks?time_range=${timeRange}`,
+      ),
+      getJson<{ artists: Artist[] }>(
+        `/api/web/spotify/top-artists?time_range=${timeRange}`,
+      ),
+    ]).then(([tracks, artists]) => {
+      if (cancelled) return;
+      setLive((prev) => ({
+        ...prev,
+        tracks: tracks?.tracks ?? prev?.tracks,
+        artists: artists?.artists ?? prev?.artists,
+      }));
     });
 
     return () => {
@@ -93,48 +107,50 @@ export default function ProfileBodySection({
   }, [status]);
 
   const topTrackList = live?.tracks ?? topTracks;
-  // Spotify API tidak menyediakan jumlah pemutaran per playlist —
-  // tampilkan 5 playlist teratas milik user.
+  const topArtistList = (live?.artists ?? topArtists).slice(0, 3);
+  // Playlist terurut frekuensi dengar (skor track favorit di dalamnya).
   const playlistList = (live?.playlists ?? playlists).slice(0, 5);
 
   console.log({ topTrackList, playlistList });
 
   return (
-    <>
-      <section className="flex min-h-screen items-center justify-center px-4 md:px-6">
-        <div className="w-full max-w-4xl space-y-4">
-          <SectionHeader
-            title="Top tracks"
-            action={
-              <div className="flex gap-2">
-                {TIME_RANGE_TERMS.map((term) => (
-                  <Button
-                    key={term.value}
-                    type={timeRange === term.value ? "primary" : "default"}
-                    shape="round"
-                    onClick={() => setTimeRange(term.value)}
-                    className={
-                      timeRange === term.value
-                        ? "bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!"
-                        : "border-white/30! bg-transparent! text-white! hover:border-white! hover:text-white!"
-                    }
-                  >
-                    {term.label}
-                  </Button>
-                ))}
-              </div>
+    <div className="mx-auto w-full max-w-4xl space-y-10 px-4 pb-24 md:px-6">
+      <div className="flex gap-2">
+        {TIME_RANGE_TERMS.map((term) => (
+          <Button
+            key={term.value}
+            type={timeRange === term.value ? "primary" : "default"}
+            shape="round"
+            onClick={() => setTimeRange(term.value)}
+            className={
+              timeRange === term.value
+                ? "bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!"
+                : "border-white/30! bg-transparent! text-white! hover:border-white! hover:text-white!"
             }
-          />
-          <TrackList tracks={topTrackList} />
+          >
+            {term.label}
+          </Button>
+        ))}
+      </div>
+
+      <section className="space-y-4">
+        <SectionHeader title="Top tracks" />
+        <TrackList tracks={topTrackList} />
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeader title="Top artists" />
+        <div className="flex gap-4">
+          {topArtistList.map((artist) => (
+            <ArtistCard key={artist.id} artist={artist} />
+          ))}
         </div>
       </section>
 
-      <section className="flex min-h-screen items-center justify-center px-4 pb-24 md:px-6">
-        <div className="w-full max-w-4xl space-y-4">
-          <SectionHeader title="Top playlists" />
-          <PlaylistList playlists={playlistList} />
-        </div>
+      <section className="space-y-4">
+        <SectionHeader title="Top playlists" />
+        <PlaylistList playlists={playlistList} />
       </section>
-    </>
+    </div>
   );
 }

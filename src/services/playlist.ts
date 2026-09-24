@@ -97,8 +97,21 @@ export const getPlaylists = (): Playlist[] => PLAYLISTS;
 export const getPlaylistById = (id: string): Playlist | undefined =>
   PLAYLISTS.find((playlist) => playlist.id === id);
 
+/** Total pemutaran playlist dummy = jumlah plays lagu-lagunya. */
+const totalPlays = (playlist: Playlist): number =>
+  (playlist.tracks ?? []).reduce(
+    (sum, track) => sum + (track.plays ?? 0),
+    0,
+  );
+
+/**
+ * Playlist publik dummy terurut dari yang paling sering didengar
+ * (dihitung dari jumlah pemutaran lagu di dalam tiap playlist).
+ */
 export const getPublicPlaylists = (): Playlist[] =>
-  PLAYLISTS.filter((playlist) => playlist.owner !== "Spotify");
+  [...PLAYLISTS]
+    .filter((playlist) => playlist.owner !== "Spotify")
+    .sort((a, b) => totalPlays(b) - totalPlays(a));
 
 /** Bentuk mentah playlist (list) dari Spotify Web API. */
 interface SpotifyPlaylistItem {
@@ -123,6 +136,16 @@ interface SpotifyPlaylistsPage {
 /** Warna aksen default untuk header playlist live. */
 const LIVE_PLAYLIST_COLOR = "#1e3264";
 
+/** Peta playlist live ke tipe domain. */
+const mapLivePlaylist = (playlist: SpotifyPlaylistItem): Playlist => ({
+  id: playlist.id,
+  name: playlist.name,
+  description: playlist.description ?? "",
+  cover: displayImage(playlist.images?.[0]?.url),
+  color: LIVE_PLAYLIST_COLOR,
+  owner: playlist.owner?.display_name ?? "Spotify",
+});
+
 /**
  * Playlist milik user yang login (Spotify Web API).
  * Endpoint list tidak menyertakan isi lagu — tracks diisi saat detail.
@@ -138,14 +161,86 @@ export const getMyPlaylists = async (
   if (!page) return null;
   return page.items
     .filter((playlist) => Boolean(playlist?.id))
-    .map((playlist) => ({
-      id: playlist.id,
-      name: playlist.name,
-      description: playlist.description ?? "",
-      cover: displayImage(playlist.images?.[0]?.url),
-      color: LIVE_PLAYLIST_COLOR,
-      owner: playlist.owner?.display_name ?? "Spotify",
-    }));
+    .map(mapLivePlaylist);
+};
+
+/** Referensi track di playlist (cukup id untuk skoring). */
+interface SpotifyPlaylistTrackRef {
+  items?: Array<{ track?: { id?: string } | null }>;
+}
+
+/** Referensi item top tracks user (cukup id untuk skoring). */
+interface SpotifyTopTracksRef {
+  items?: Array<{ id?: string }>;
+}
+
+/** Bobot peringkat: track peringkat lebih tinggi berbobot lebih besar. */
+const topTrackWeights = (
+  items: Array<{ id?: string }>,
+): Map<string, number> => {
+  const weights = new Map<string, number>();
+  items.forEach((item, index) => {
+    if (item?.id && !weights.has(item.id)) {
+      weights.set(item.id, items.length - index);
+    }
+  });
+  return weights;
+};
+
+/**
+ * Playlist yang paling sering didengar user. Spotify Web API tidak
+ * menyediakan play count per playlist, jadi skor dihitung dari isi
+ * playlist: setiap track yang muncul di top tracks user (long term,
+ * dibobot peringkat) menambah skornya — playlist berisi lagu favorit
+ * user dianggap paling sering didengar. Bila tidak ada yang cocok,
+ * kembali ke urutan playlist user (perilaku lama).
+ */
+export const getMyTopPlaylists = async (
+  accessToken: string,
+  limit = 5,
+): Promise<Playlist[] | null> => {
+  const [topTracks, playlistsPage] = await Promise.all([
+    fetchSpotifyApi<SpotifyTopTracksRef>(
+      "/me/top/tracks?limit=50&time_range=long_term",
+      accessToken,
+    ),
+    fetchSpotifyApi<SpotifyPlaylistsPage>(
+      "/me/playlists?limit=50",
+      accessToken,
+    ),
+  ]);
+  if (!topTracks?.items || !playlistsPage?.items) return null;
+
+  const weights = topTrackWeights(topTracks.items);
+  // Analisis 20 playlist pertama saja agar tidak membentur rate limit.
+  const candidates = playlistsPage.items
+    .filter((playlist) => Boolean(playlist?.id))
+    .slice(0, 20);
+
+  const scored = await Promise.all(
+    candidates.map(async (playlist) => {
+      const tracks = await fetchSpotifyApi<SpotifyPlaylistTrackRef>(
+        `/playlists/${playlist.id}/tracks?limit=100&fields=items(track(id))`,
+        accessToken,
+      );
+      const score = (tracks?.items ?? []).reduce(
+        (sum, item) =>
+          sum + (item.track?.id ? (weights.get(item.track.id) ?? 0) : 0),
+        0,
+      );
+      return { playlist, score };
+    }),
+  );
+
+  const ranked = scored
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((entry) => mapLivePlaylist(entry.playlist));
+
+  return ranked.length > 0
+    ? ranked
+    : candidates.slice(0, limit).map(mapLivePlaylist);
 };
 
 /**

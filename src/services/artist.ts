@@ -20,6 +20,12 @@ export const getArtists = (): Artist[] => ARTISTS;
 export const getArtistById = (id: string): Artist | undefined =>
   ARTISTS.find((artist) => artist.id === id);
 
+/** Top artis dummy terurut jumlah pendengar (dipakai sebelum login). */
+export const getTopArtists = (limit = 3): Artist[] =>
+  [...ARTISTS]
+    .sort((a, b) => b.listeners - a.listeners)
+    .slice(0, limit);
+
 /** Bentuk mentah artis dari Spotify Web API. */
 interface SpotifyArtistItem {
   id: string;

@@ -1,8 +1,10 @@
 import { getValidAccessToken } from "@/lib/spotify";
-import { getMyPlaylists } from "@/services/playlist";
+import { getMyTopPlaylists } from "@/services/playlist";
 
 /**
- * Playlist milik user yang login (Spotify Web API).
+ * Playlist yang paling sering didengar user yang login: skor dihitung
+ * dari track di tiap playlist yang muncul di top tracks user (lihat
+ * services/playlist.ts → getMyTopPlaylists).
  */
 export async function GET() {
   const accessToken = await getValidAccessToken();
@@ -10,7 +12,7 @@ export async function GET() {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const playlists = await getMyPlaylists(accessToken);
+  const playlists = await getMyTopPlaylists(accessToken, 5);
   if (!playlists) {
     return Response.json({ error: "spotify_unavailable" }, { status: 502 });
   }

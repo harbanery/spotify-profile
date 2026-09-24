@@ -21,6 +21,7 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
   const { status, user: sessionUser } = useWebSession();
   const profile =
     status === "authenticated" && sessionUser ? sessionUser : user;
+  console.log({ profile });
 
   return (
     <section className="relative overflow-hidden">
@@ -28,11 +29,11 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
         aria-hidden
         className="absolute inset-x-0 top-0 h-80"
         style={{
-          background: "linear-gradient(180deg, #2f5c8f 0%, #121212 100%)",
+          background: "linear-gradient(180deg, #1ed760 0%, #121212 100%)",
         }}
       />
-      <div className="relative w-full max-w-5xl mx-auto flex flex-col gap-6 px-4 pt-10 pb-8 md:px-6 md:pt-16">
-        <div className="flex min-w-0 flex-col items-start gap-6 md:flex-row md:items-end">
+      <div className="relative w-full max-w-4xl mx-auto flex flex-col gap-6 px-4 pt-10 pb-8 md:px-6 md:pt-16">
+        <div className="flex min-w-0 flex-col items-start gap-6 md:flex-row md:items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={profile.avatar}
@@ -42,14 +43,15 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             className="size-36 rounded-full object-cover shadow-2xl md:size-52"
           />
           <div className="min-w-0">
-            <p className="text-xs font-bold text-white">Profile</p>
             <h1 className="mt-2 text-5xl font-black tracking-tight text-white md:text-8xl">
               {profile.displayName}
             </h1>
             <p className="mt-4 text-sm text-white/80">
-              {profile.handle} • {profile.publicPlaylists} public playlists •{" "}
-              {formatCount(profile.followers)} followers •{" "}
-              {formatCount(profile.following)} following
+              {profile.handle}
+              {profile.publicPlaylists > 0 &&
+                ` • ${profile.publicPlaylists} public playlists`}
+              {profile.followers > 0 &&
+                ` • ${formatCount(profile.followers)} followers`}
             </p>
           </div>
         </div>
