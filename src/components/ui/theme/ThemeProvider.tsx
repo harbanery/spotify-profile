@@ -14,13 +14,15 @@ import { useStoredPreference } from "@/hooks/useStoredPreference";
  * Tema global (halaman + antd). Mode yang tersedia (dipilih via
  * ThemeToggle di navbar):
  * - "spotify" (default): tampilan asli halaman — gelap, aksen hijau.
- * - "dark": gradient gelap — aksen biru digelapkan jadi navy tua.
+ * - "dark": gradient gelap hitam/abu — tombol primary abu gelap, teks terang.
  * - "light": gradient terang — hijau jadi putih, primary gelap + teks terang.
  * - "compact": palet spotify dengan density komponen antd kompak.
  * Tema diterapkan dua lapis: atribut data-theme di <html> mengganti CSS
  * variable palet halaman (assets/global/index.css — inilah yang membuat
  * dark/light benar-benar terlihat), dan ConfigProvider mengatur token
- * komponen antd. Pilihan disimpan di localStorage (useStoredPreference).
+ * komponen antd — termasuk Menu (dropdown LanguageToggle/ThemeToggle)
+ * yang diberi token warna selaras tiap tema. Pilihan disimpan di
+ * localStorage (useStoredPreference).
  */
 
 export type ThemeMode = "spotify" | "dark" | "light" | "compact";
@@ -62,6 +64,25 @@ const spotifyAntdTokens = {
   fontFamily: "var(--font-figtree), ui-sans-serif, system-ui, sans-serif",
 };
 
+/** Tema dropdown (Menu) selaras palet CSS variable tiap mode. */
+const menuTokens = {
+  spotify: {
+    colorItemBg: "#181818",
+    colorItemBgHover: "#242424",
+    colorItemBgSelected: "rgba(30, 215, 96, 0.15)",
+  },
+  dark: {
+    colorItemBg: "#27272a",
+    colorItemBgHover: "#3f3f46",
+    colorItemBgSelected: "rgba(82, 82, 91, 0.4)",
+  },
+  light: {
+    colorItemBg: "#ffffff",
+    colorItemBgHover: "#f4f4f5",
+    colorItemBgSelected: "rgba(24, 24, 27, 0.08)",
+  },
+} as const;
+
 /** Konfigurasi tema antd per mode — selaras palet CSS variable. */
 const buildThemeConfig = (mode: ThemeMode) => {
   switch (mode) {
@@ -69,8 +90,8 @@ const buildThemeConfig = (mode: ThemeMode) => {
       return {
         algorithm: antdTheme.darkAlgorithm,
         token: {
-          // Biru digelapkan jadi navy — selaras aksen CSS variable tema.
-          colorPrimary: "#1e3a8a",
+          // Abu gelap (hitam/abu) — selaras aksen CSS variable tema.
+          colorPrimary: "#3f3f46",
           colorBgBase: "#18181b",
           colorText: "#fafafa",
           colorTextSecondary: "#a1a1aa",
@@ -78,6 +99,7 @@ const buildThemeConfig = (mode: ThemeMode) => {
           fontFamily:
             "var(--font-figtree), ui-sans-serif, system-ui, sans-serif",
         },
+        components: { Menu: menuTokens.dark },
       };
     case "light":
       return {
@@ -92,11 +114,13 @@ const buildThemeConfig = (mode: ThemeMode) => {
           fontFamily:
             "var(--font-figtree), ui-sans-serif, system-ui, sans-serif",
         },
+        components: { Menu: menuTokens.light },
       };
     case "compact":
       return {
         algorithm: [antdTheme.darkAlgorithm, antdTheme.compactAlgorithm],
         token: spotifyAntdTokens,
+        components: { Menu: menuTokens.spotify },
       };
     default:
       return {
@@ -108,6 +132,7 @@ const buildThemeConfig = (mode: ThemeMode) => {
             defaultShadow: "none",
             fontWeight: 600,
           },
+          Menu: menuTokens.spotify,
         },
       };
   }

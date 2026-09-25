@@ -29,8 +29,8 @@
   --c-hover: rgba(255, 255, 255, 0.06);
 }
 
-/* Dark: gradient GELAP — aksen biru digelapkan jadi navy tua (bukan biru
-   terang); tombol primary navy dengan teks terang. */
+/* Dark: gradient GELAP hitam/abu — tanpa biru; tombol primary abu gelap
+   dengan teks terang. */
 [data-theme="dark"] {
   --c-page: #09090b;
   --c-base: #18181b;
@@ -38,10 +38,10 @@
   --c-raised: #3f3f46;
   --c-ink: #fafafa;
   --c-subdued: #a1a1aa;
-  --c-accent: #1e3a8a;
-  --c-accent-strong: #1d4ed8;
-  --c-brand: #1e3a8a;
-  --c-brand-strong: #1d4ed8;
+  --c-accent: #27272a;
+  --c-accent-strong: #3f3f46;
+  --c-brand: #3f3f46;
+  --c-brand-strong: #52525b;
   --c-brand-ink: #ffffff;
   --c-line: rgba(255, 255, 255, 0.12);
   --c-line-strong: rgba(255, 255, 255, 0.35);

@@ -32,11 +32,10 @@ export default function SpotifyLoginButton({
     buttonLabel = t("nav.loading");
   } else if (status === "authenticated") {
     buttonProps = {
-      type: "default",
+      type: "primary",
+      danger: true,
       href: "/api/web/auth/logout",
       icon: <LogoutOutlined />,
-      className:
-        "border-line-strong! bg-transparent! text-ink! hover:border-ink! hover:text-ink!",
     };
     buttonLabel = t("nav.logout");
   } else {

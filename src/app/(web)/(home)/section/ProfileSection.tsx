@@ -26,15 +26,23 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
     status === "authenticated" && sessionUser ? sessionUser : user;
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative">
+      {/* Gradasi dekoratif dikurung container overflow-hidden SENDIRI:
+          tetap tidak meluber menutupi section berikutnya, sementara
+          section tidak ber-overflow-hidden lagi sehingga shadow avatar
+          (dan kartu lain) tidak terpotong di tepinya. */}
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 h-80"
-        style={{
-          background:
-            "linear-gradient(180deg, var(--c-accent) 0%, var(--c-base) 100%)",
-        }}
-      />
+        className="absolute inset-x-0 top-0 h-80 overflow-hidden"
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, var(--c-accent) 0%, var(--c-base) 100%)",
+          }}
+        />
+      </div>
       <div className="relative w-full max-w-4xl mx-auto flex flex-col gap-6 px-4 pt-10 pb-8 md:px-6 md:pt-16">
         <div className="flex min-w-0 flex-col items-start gap-6 md:flex-row md:items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -63,8 +71,6 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
           </div>
         </div>
       </div>
-      {/* overflow-hidden mengurung gradasi dekoratif: tanpa ini gradasi
-          (positioned) melukis di atas konten statis section berikutnya. */}
       <WebNavbar />
     </section>
   );
