@@ -47,11 +47,9 @@ interface SpotifyTokenResponse {
 }
 
 /** random bytes -> base64url (tanpa padding), sesuai spesifikasi PKCE. */
-const toBase64Url = (buffer: Buffer): string =>
-  buffer.toString("base64url");
+const toBase64Url = (buffer: Buffer): string => buffer.toString("base64url");
 
-export const generateCodeVerifier = (): string =>
-  toBase64Url(randomBytes(48));
+export const generateCodeVerifier = (): string => toBase64Url(randomBytes(48));
 
 export const generateState = (): string => toBase64Url(randomBytes(24));
 
@@ -114,9 +112,7 @@ export const callbackUriFor = (requestOrigin: string): string | null => {
 };
 
 /** Body dasar pertukaran token; client_secret dikirim bila tersedia. */
-const tokenRequestBody = (
-  entries: Record<string, string>,
-): URLSearchParams => {
+const tokenRequestBody = (entries: Record<string, string>): URLSearchParams => {
   const body = new URLSearchParams(entries);
   if (SPOTIFY_CLIENT_SECRET) {
     body.set("client_secret", SPOTIFY_CLIENT_SECRET);

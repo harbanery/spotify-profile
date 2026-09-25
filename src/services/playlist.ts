@@ -158,7 +158,11 @@ const mapLivePlaylist = (playlist: SpotifyPlaylistItem): Playlist => ({
 });
 
 /**
- * Playlist milik user yang login (Spotify Web API).
+ * Playlist milik user yang login (Spotify Web API): cukup data
+ * /me/playlists — tanpa time range, runInBatches, atau pembacaan isi
+ * playlist (playlist items). console.log hasil fetch sengaja
+ * dibiarkan satu-satunya di file ini untuk mengecek di terminal
+ * apakah fetch masih berjalan.
  * Endpoint list tidak menyertakan isi lagu — tracks diisi saat detail.
  */
 export const getMyPlaylists = async (
@@ -169,101 +173,11 @@ export const getMyPlaylists = async (
     `/me/playlists?limit=${limit}`,
     accessToken,
   );
+  console.log({ playlistsPage: page });
   if (!page) return null;
   return page.items
     .filter((playlist) => Boolean(playlist?.id))
     .map(mapLivePlaylist);
-};
-
-/** Referensi track di playlist (cukup id untuk skoring). */
-interface SpotifyPlaylistTrackRef {
-  items?: Array<{ track?: { id?: string } | null }>;
-}
-
-/** Referensi item top tracks user (cukup id untuk skoring). */
-interface SpotifyTopTracksRef {
-  items?: Array<{ id?: string }>;
-}
-
-/**
- * Playlist yang paling sering didengar user. Spotify Web API tidak
- * menyediakan play count per playlist, jadi skor dihitung dari isi
- * playlist: setiap track yang muncul di top tracks user (gabungan short
- * term + long term, masing-masing dibobot peringkat lalu dijumlahkan)
- * menambah skornya — playlist berisi lagu favorit user dianggap paling
- * sering didengar. Bila tidak ada yang cocok, kembali ke urutan playlist
- * user (perilaku lama).
- */
-export const getMyTopPlaylists = async (
-  accessToken: string,
-  limit = 5,
-): Promise<Playlist[] | null> => {
-  const [shortTop, longTop, playlistsPage] = await Promise.all([
-    fetchSpotifyApi<SpotifyTopTracksRef>(
-      "/me/top/tracks?limit=50&time_range=short_term",
-      accessToken,
-    ),
-    fetchSpotifyApi<SpotifyTopTracksRef>(
-      "/me/top/tracks?limit=50&time_range=long_term",
-      accessToken,
-    ),
-    fetchSpotifyApi<SpotifyPlaylistsPage>(
-      "/me/playlists?limit=50",
-      accessToken,
-    ),
-  ]);
-  if (!playlistsPage?.items) return null;
-
-  // Bobot gabungan: lagu yang jadi favorit di kedua rentang bertambah
-  // skornya, sehingga pemeringkat lebih stabil.
-  const weights = new Map<string, number>();
-  const addWeights = (items: Array<{ id?: string }>) => {
-    items.forEach((item, index) => {
-      if (!item?.id) return;
-      weights.set(
-        item.id,
-        (weights.get(item.id) ?? 0) + (items.length - index),
-      );
-    });
-  };
-  if (shortTop?.items) addWeights(shortTop.items);
-  if (longTop?.items) addWeights(longTop.items);
-  // Analisis maksimal 30 playlist pertama agar tidak membentur rate limit.
-  const candidates = playlistsPage.items
-    .filter((playlist) => Boolean(playlist?.id))
-    .slice(0, 30);
-
-  console.log({ candidates });
-
-  const scored = await Promise.all(
-    candidates.map(async (playlist) => {
-      // GET /playlists/{id}/items — referensi:
-      // https://developer.spotify.com/documentation/web-api/reference/get-playlists-items
-      const tracks = await fetchSpotifyApi<SpotifyPlaylistTrackRef>(
-        `/playlists/${playlist.id}/items?limit=100&fields=items(track(id))`,
-        accessToken,
-      );
-      console.log({ playlist, tracks });
-      const score = (tracks?.items ?? []).reduce(
-        (sum, item) =>
-          sum + (item.track?.id ? (weights.get(item.track.id) ?? 0) : 0),
-        0,
-      );
-      return { playlist, score };
-    }),
-  );
-
-  const ranked = scored
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((entry) => mapLivePlaylist(entry.playlist));
-
-  console.log({ ranked });
-
-  return ranked.length > 0
-    ? ranked
-    : candidates.slice(0, limit).map(mapLivePlaylist);
 };
 
 /**

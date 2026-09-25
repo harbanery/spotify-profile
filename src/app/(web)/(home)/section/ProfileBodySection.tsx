@@ -46,9 +46,9 @@ const TIME_RANGE_TERMS: Array<{ label: string; value: TimeRange }> = [
  * section) dengan height mengikuti total data. Filter rentang waktu
  * satu di paling atas (antd Button
  * round, className Tailwind wajib berakhiran "!" sesuai konvensi proyek)
- * dan berlaku ke top tracks + top artists; playlist tidak difilter
- * karena Spotify API tidak punya konsep waktu pada playlist —
- * pemeringkatannya internal (services/playlist.ts → getMyTopPlaylists).
+ * dan hanya berlaku ke top tracks dan top artists — playlist diambil
+ * sekali per sesi (cukup data /me/playlists, tanpa skoring: layaknya
+ * takeout time range, runInBatches, dan playlist items).
  */
 export default function ProfileBodySection({
   topTracks,
@@ -73,7 +73,8 @@ export default function ProfileBodySection({
       }
     };
 
-    // Rentang waktu berlaku pada top tracks dan top artists; playlist tetap.
+    // Rentang waktu hanya berlaku pada top tracks dan top artists
+    // (playlist punya effect sendiri, tanpa filter).
     Promise.all([
       getJson<{ tracks: Track[] }>(
         `/api/web/spotify/top-tracks?time_range=${timeRange}`,
@@ -100,6 +101,8 @@ export default function ProfileBodySection({
     if (status !== "authenticated") return;
 
     let cancelled = false;
+    // Playlist diambil sekali per sesi (cukup data /me/playlists) —
+    // tidak mengikuti filter rentang waktu top tracks/artists.
     fetch("/api/web/spotify/playlists")
       .then((response) => (response.ok ? response.json() : undefined))
       .then((data: { playlists?: Playlist[] } | undefined) => {
@@ -126,7 +129,7 @@ export default function ProfileBodySection({
 
   const topTrackList = live?.tracks ?? topTracks;
   const topArtistList = (live?.artists ?? topArtists).slice(0, 5);
-  // Playlist terurut frekuensi dengar (skor track favorit di dalamnya).
+  // Playlist apa adanya dari /me/playlists (urutan API, tanpa skoring).
   const playlistList = (live?.playlists ?? playlists).slice(0, 5);
 
   return (
@@ -154,14 +157,16 @@ export default function ProfileBodySection({
           Top artists
         </h2>
         {artistsLoading ? (
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center items-center h-full min-h-48">
             <Spin />
           </div>
         ) : topArtistList.length === 0 ? (
-          <Empty
-            image={<TeamOutlined className="text-5xl! text-subdued!" />}
-            description="No top artists yet"
-          />
+          <div className="flex justify-center items-center h-full min-h-48">
+            <Empty
+              image={<TeamOutlined className="text-5xl! text-subdued!" />}
+              description="No top artists yet"
+            />
+          </div>
         ) : (
           <div className="flex justify-center gap-4">
             {topArtistList.map((artist) => (
@@ -175,16 +180,18 @@ export default function ProfileBodySection({
         <section className="min-w-0 space-y-4">
           <SectionHeader title="Top tracks" />
           {tracksLoading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center items-center h-full max-h-84">
               <Spin />
             </div>
           ) : topTrackList.length === 0 ? (
-            <Empty
-              image={
-                <CustomerServiceOutlined className="text-5xl! text-subdued!" />
-              }
-              description="No top tracks yet"
-            />
+            <div className="flex justify-center items-center h-full max-h-84">
+              <Empty
+                image={
+                  <CustomerServiceOutlined className="text-5xl! text-subdued!" />
+                }
+                description="No top tracks yet"
+              />
+            </div>
           ) : (
             <TrackList tracks={topTrackList} />
           )}
@@ -193,16 +200,18 @@ export default function ProfileBodySection({
         <section className="min-w-0 space-y-4">
           <SectionHeader title="Top playlists" />
           {playlistsLoading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center items-center h-full max-h-84">
               <Spin />
             </div>
           ) : playlistList.length === 0 ? (
-            <Empty
-              image={
-                <UnorderedListOutlined className="text-5xl! text-subdued!" />
-              }
-              description="No playlists yet"
-            />
+            <div className="flex justify-center items-center h-full max-h-84">
+              <Empty
+                image={
+                  <UnorderedListOutlined className="text-5xl! text-subdued!" />
+                }
+                description="No playlists yet"
+              />
+            </div>
           ) : (
             <PlaylistList playlists={playlistList} />
           )}
