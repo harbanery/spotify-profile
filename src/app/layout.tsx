@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${figtree.variable} h-full antialiased`}>
-      <body className="h-full overflow-hidden bg-black font-sans text-white">
+      <body className="h-full overflow-hidden bg-page font-sans text-ink">
         <AntdRegistry>
           <ThemeProvider>
             <LocaleProvider>{children}</LocaleProvider>

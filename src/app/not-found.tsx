@@ -9,9 +9,9 @@ export default function NotFound() {
   const { t } = useLocale();
 
   return (
-    <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-black px-6 text-center">
+    <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-page px-6 text-center">
       <p className="text-7xl font-black text-spotify">404</p>
-      <h1 className="text-2xl font-bold text-white">{t("notFound.title")}</h1>
+      <h1 className="text-2xl font-bold text-ink">{t("notFound.title")}</h1>
       <p className="max-w-md text-sm text-subdued">
         {t("notFound.description")}
       </p>

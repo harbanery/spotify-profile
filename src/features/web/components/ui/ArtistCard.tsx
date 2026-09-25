@@ -17,7 +17,7 @@ export default function ArtistCard({ artist }: { artist: Artist }) {
         height={160}
         className="mx-auto mb-3 aspect-square w-full rounded-full object-cover shadow-lg"
       />
-      <p className="truncate text-sm font-semibold text-white">{artist.name}</p>
+      <p className="truncate text-sm font-semibold text-ink">{artist.name}</p>
     </div>
   );
 }

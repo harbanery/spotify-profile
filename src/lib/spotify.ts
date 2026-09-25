@@ -323,24 +323,73 @@ export const getValidAccessToken = async (): Promise<string | null> => {
   return nextSession.accessToken;
 };
 
+/** Jeda singkat (ms) antar percobaan ulang. */
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Cap tunggu Retry-After dari Spotify (ms) agar request tidak menggantung. */
+const RETRY_AFTER_CAP_MS = 5_000;
+/** Backoff eksponensial untuk kegagalan 5xx/jaringan (ms per percobaan). */
+const SERVER_ERROR_BACKOFF_MS = [500, 1000] as const;
+/** Jitter ±25% agar banyak client tidak tersinkron menghujani API. */
+const jitter = (ms: number): number => ms * (0.75 + Math.random() * 0.5);
+
 /**
- * GET {path} ke Spotify Web API dengan Bearer token.
- * Null bila gagal (401/404/rate limit/network) — pemanggil menentukan fallback.
+ * GET {path} ke Spotify Web API dengan Bearer token — P0 proteksi kuota:
+ * 429 dihormati lewat header Retry-After (dicap 5 detik, maks 1x ulang),
+ * kegagalan 5xx/jaringan di-backoff eksponensial + jitter (maks 2x ulang).
+ * Null bila tetap gagal (termasuk 401/404) — pemanggil menentukan fallback.
+ * Referensi rate limit:
+ * https://developer.spotify.com/documentation/web-api/concepts/rate-limits
  */
 export const fetchSpotifyApi = async <T>(
   path: string,
   accessToken: string,
 ): Promise<T | null> => {
-  try {
-    const response = await fetch(`${SPOTIFY_API_BASE}${path}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      cache: "no-store",
-    });
-    if (!response.ok) return null;
-    // 204 No Content (mis. unfollow) tidak punya body.
-    if (response.status === 204) return null;
-    return (await response.json()) as T;
-  } catch {
+  const maxAttempts = SERVER_ERROR_BACKOFF_MS.length + 1;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch(`${SPOTIFY_API_BASE}${path}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+      });
+    } catch {
+      // Kegagalan jaringan — backoff lalu ulangi.
+      if (attempt + 1 >= maxAttempts) return null;
+      await sleep(jitter(SERVER_ERROR_BACKOFF_MS[attempt]));
+      continue;
+    }
+
+    if (response.ok) {
+      // 204 No Content (mis. tidak ada pemutaran aktif) tidak punya body.
+      if (response.status === 204) return null;
+      try {
+        return (await response.json()) as T;
+      } catch {
+        return null;
+      }
+    }
+
+    if (response.status === 429 && attempt + 1 < maxAttempts) {
+      // Hormati Retry-After (detik) dari Spotify, dicap agar tak menggantung.
+      const retryAfterMs = Math.min(
+        (Number(response.headers.get("Retry-After")) || 1) * 1000,
+        RETRY_AFTER_CAP_MS,
+      );
+      await sleep(retryAfterMs);
+      continue;
+    }
+
+    if (response.status >= 500 && attempt + 1 < maxAttempts) {
+      await sleep(jitter(SERVER_ERROR_BACKOFF_MS[attempt]));
+      continue;
+    }
+
+    // 4xx lain (401/403/404) atau budget percobaan habis — tidak di-retry.
     return null;
   }
+
+  return null;
 };

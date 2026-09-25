@@ -5,8 +5,12 @@ import NowPlayingCard from "@/features/web/components/ui/NowPlayingCard";
 import { useWebSession } from "@/features/web/hooks/session";
 import type { NowPlaying } from "@/services/player";
 
-/** Interval polling pemutaran (ms) — seimbang vs rate limit Spotify API. */
+/** Interval polling dasar (ms) — jangan lebih agresif dari ini (kuota dev). */
 const POLL_INTERVAL_MS = 10_000;
+/** Interval saat tab tersembunyi (ms) — hemat kuota Spotify. */
+const POLL_HIDDEN_MS = 60_000;
+/** Batas atas backoff kegagalan (ms). */
+const POLL_MAX_BACKOFF_MS = 60_000;
 
 /**
  * Section lagu yang sedang diputar — dipisah dari ProfileSection agar
@@ -14,8 +18,10 @@ const POLL_INTERVAL_MS = 10_000;
  * & horizontal) pada ruang setinggi 60% layar (min-h-[60vh]) dengan
  * lebar sebesar tablet (max-w-2xl); kartu tetap menyesuaikan kontennya.
  * Karena pemutaran bersifat live (lagu terus berputar, berganti, atau
- * dijeda), data dipoll berkala agar kartu selalu up-to-date; gangguan
- * jaringan sesaat mempertahankan data terakhir.
+ * dijeda), data dipoll agar kartu selalu up-to-date — P0 proteksi kuota:
+ * polling adaptif (jeda panjang saat tab tersembunyi, backoff
+ * eksponensial saat gagal, request basi di-abort) dan interval dasar
+ * tidak lebih agresif dari 10 detik.
  */
 export default function NowPlayingSection() {
   const { status } = useWebSession();
@@ -25,27 +31,66 @@ export default function NowPlayingSection() {
     if (status !== "authenticated") return;
 
     let cancelled = false;
+    const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let failures = 0;
+
+    const schedule = (ms: number) => {
+      clearTimeout(timer);
+      timer = setTimeout(load, ms);
+    };
 
     const load = async () => {
+      // Tab tersembunyi: tunda dengan jeda panjang (hemat kuota Spotify).
+      if (document.visibilityState !== "visible") {
+        schedule(POLL_HIDDEN_MS);
+        return;
+      }
+
       try {
-        const response = await fetch("/api/web/spotify/now-playing");
+        const response = await fetch("/api/web/spotify/now-playing", {
+          signal: controller.signal,
+        });
         const data: { nowPlaying?: NowPlaying | null } | null = response.ok
           ? await response.json()
           : null;
-        // Null dari endpoint = tidak ada pemutaran aktif → kosongkan kartu.
-        if (!cancelled) setNowPlaying(data?.nowPlaying ?? null);
+        if (!cancelled) {
+          // Null dari endpoint = tidak ada pemutaran aktif → kosongkan kartu.
+          setNowPlaying(data?.nowPlaying ?? null);
+          failures = 0;
+        }
       } catch {
-        // Gagal fetch sesaat: pertahankan snapshot terakhir, tetap poll.
+        // Gagal fetch sesaat (termasuk abort): pertahankan snapshot
+        // terakhir, backoff eksponensial pada kegagalan beruntun.
+        if (!cancelled) failures += 1;
       }
-      if (!cancelled) timer = setTimeout(load, POLL_INTERVAL_MS);
+
+      if (!cancelled) {
+        const backoff = Math.min(
+          POLL_INTERVAL_MS * 2 ** failures,
+          POLL_MAX_BACKOFF_MS,
+        );
+        schedule(backoff);
+      }
     };
 
+    const onVisibilityChange = () => {
+      if (cancelled) return;
+      // Kembali terlihat → langsung segarkan, lalu lanjut interval normal.
+      if (document.visibilityState === "visible") {
+        clearTimeout(timer);
+        load();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
     load();
 
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      controller.abort();
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [status]);
 

@@ -162,9 +162,7 @@ export default function ProfileBodySection({
   ) : topTrackList.length === 0 ? (
     <div className="flex justify-center items-center h-full max-h-84">
       <Empty
-        image={
-          <CustomerServiceOutlined className="text-5xl! text-subdued!" />
-        }
+        image={<CustomerServiceOutlined className="text-5xl! text-subdued!" />}
         description={t("empty.topTracks")}
       />
     </div>
@@ -192,7 +190,7 @@ export default function ProfileBodySection({
               className={
                 timeRange === term.value
                   ? "bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!"
-                  : "border-white/30! bg-transparent! text-white! hover:border-white! hover:text-white!"
+                  : "border-line-strong! bg-transparent! text-ink! hover:border-ink! hover:text-ink!"
               }
             >
               {t(term.labelKey)}
@@ -211,7 +209,7 @@ export default function ProfileBodySection({
               className={
                 layout === mode.value
                   ? "bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!"
-                  : "border-white/30! bg-transparent! text-white! hover:border-white! hover:text-white!"
+                  : "border-line-strong! bg-transparent! text-ink! hover:border-ink! hover:text-ink!"
               }
             >
               {t(mode.labelKey)}
@@ -237,13 +235,15 @@ export default function ProfileBodySection({
         /* Mode grid: section bertumpuk, tiap deret kartu max-w-4xl. */
         <>
           <section className="space-y-4 text-center">
-            <h2 className="text-xl font-bold tracking-tight text-white md:text-2xl">
+            <h2 className="text-xl font-bold tracking-tight text-ink md:text-2xl">
               {t("section.topArtists")}
             </h2>
             {artistsBody}
           </section>
-          <section className="min-w-0 space-y-4">
-            <SectionHeader title={t("section.topTracks")} />
+          <section className="space-y-4 text-center">
+            <h2 className="text-xl font-bold tracking-tight text-ink md:text-2xl">
+              {t("section.topTracks")}
+            </h2>
             {tracksBody}
           </section>
         </>

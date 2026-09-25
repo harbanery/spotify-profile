@@ -37,7 +37,7 @@ export default function LanguageToggle() {
         shape="circle"
         icon={<GlobalOutlined />}
         aria-label="Change language"
-        className="text-white! hover:bg-white/10!"
+        className="text-ink! hover:bg-hoverfill!"
       />
     </Dropdown>
   );

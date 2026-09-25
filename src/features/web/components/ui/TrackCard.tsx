@@ -20,7 +20,7 @@ export default function TrackCard({ track }: { track: Track }) {
         height={160}
         className="mx-auto mb-3 aspect-square w-full rounded-lg object-cover shadow-lg"
       />
-      <p className="truncate text-sm font-semibold text-white">
+      <p className="truncate text-sm font-semibold text-ink">
         {track.title}
       </p>
       <p className="mt-0.5 truncate text-xs text-subdued">{track.artist}</p>

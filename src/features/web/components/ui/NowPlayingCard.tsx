@@ -48,7 +48,7 @@ export default function NowPlayingCard({ nowPlaying }: NowPlayingCardProps) {
           {isPlaying ? t("nowPlaying.now") : t("nowPlaying.last")}
         </p>
         <div className="min-w-0">
-          <p className="mt-1 truncate text-xl font-bold text-white md:text-2xl">
+          <p className="mt-1 truncate text-xl font-bold text-ink md:text-2xl">
             {track.title}
           </p>
           <p className="truncate text-sm text-subdued">{track.artist}</p>
@@ -56,7 +56,7 @@ export default function NowPlayingCard({ nowPlaying }: NowPlayingCardProps) {
         {nowPlaying.playlist ? (
           <p className="mt-1 truncate text-xs text-subdued">
             {t("nowPlaying.from")}{" "}
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-ink">
               {nowPlaying.playlist}
             </span>
           </p>

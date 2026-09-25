@@ -36,7 +36,7 @@ export default function SpotifyLoginButton({
       href: "/api/web/auth/logout",
       icon: <LogoutOutlined />,
       className:
-        "border-white/30! bg-transparent! text-white! hover:border-white! hover:text-white!",
+        "border-line-strong! bg-transparent! text-ink! hover:border-ink! hover:text-ink!",
     };
     buttonLabel = t("nav.logout");
   } else {

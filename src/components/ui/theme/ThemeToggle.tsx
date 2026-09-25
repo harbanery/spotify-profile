@@ -37,7 +37,7 @@ export default function ThemeToggle() {
         shape="circle"
         icon={<FormatPainterOutlined />}
         aria-label="Change theme"
-        className="text-white! hover:bg-white/10!"
+        className="text-ink! hover:bg-hoverfill!"
       />
     </Dropdown>
   );

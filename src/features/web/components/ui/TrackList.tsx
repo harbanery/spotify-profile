@@ -19,7 +19,7 @@ export default function TrackList({ tracks }: TrackListProps) {
       {tracks.map((track) => (
         <li
           key={track.id}
-          className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/5"
+          className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-hoverfill"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -30,7 +30,7 @@ export default function TrackList({ tracks }: TrackListProps) {
             className="size-12 shrink-0 rounded object-cover"
           />
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-white">
+            <p className="truncate text-sm font-medium text-ink">
               {track.title}
             </p>
             <p className="truncate text-sm text-subdued">{track.artist}</p>

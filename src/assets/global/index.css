@@ -5,14 +5,69 @@
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Warna khas Spotify sebagai token Tailwind. */
-@theme {
-  --color-spotify: #1ed760;
-  --color-spotify-strong: #1db954;
-  --color-base: #121212;
-  --color-elevated: #181818;
-  --color-raised: #242424;
-  --color-subdued: #b3b3b3;
+/* Palet per tema (CSS variable) — ThemeProvider memasang data-theme di
+   <html>; :root = spotify, tampilan asli halaman. Token Tailwind di bawah
+   mengikat kelas utility (bg-page, text-ink, bg-spotify, dst) ke variabel
+   ini sehingga seluruh halaman ikut berganti tema, bukan hanya komponen
+   antd. Mode "compact" berbagi palet spotify (bedanya density antd). */
+:root,
+[data-theme="spotify"],
+[data-theme="compact"] {
+  --c-page: #000000;
+  --c-base: #121212;
+  --c-elevated: #181818;
+  --c-raised: #242424;
+  --c-ink: #ffffff;
+  --c-subdued: #b3b3b3;
+  --c-accent: #1ed760;
+  --c-accent-strong: #1db954;
+  --c-line: rgba(255, 255, 255, 0.1);
+  --c-line-strong: rgba(255, 255, 255, 0.3);
+  --c-hover: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] {
+  --c-page: #09090b;
+  --c-base: #18181b;
+  --c-elevated: #27272a;
+  --c-raised: #3f3f46;
+  --c-ink: #fafafa;
+  --c-subdued: #a1a1aa;
+  --c-accent: #60a5fa;
+  --c-accent-strong: #3b82f6;
+  --c-line: rgba(255, 255, 255, 0.12);
+  --c-line-strong: rgba(255, 255, 255, 0.35);
+  --c-hover: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme="light"] {
+  --c-page: #ffffff;
+  --c-base: #ffffff;
+  --c-elevated: #f4f4f5;
+  --c-raised: #e4e4e7;
+  --c-ink: #18181b;
+  --c-subdued: #52525b;
+  --c-accent: #1db954;
+  --c-accent-strong: #12813b;
+  --c-line: rgba(24, 24, 27, 0.1);
+  --c-line-strong: rgba(24, 24, 27, 0.3);
+  --c-hover: rgba(24, 24, 27, 0.05);
+}
+
+/* Token warna Tailwind diikat ke variabel tema — "inline" agar kelas
+   utility membaca nilai variabel saat runtime (mengikuti [data-theme]). */
+@theme inline {
+  --color-page: var(--c-page);
+  --color-base: var(--c-base);
+  --color-elevated: var(--c-elevated);
+  --color-raised: var(--c-raised);
+  --color-ink: var(--c-ink);
+  --color-subdued: var(--c-subdued);
+  --color-spotify: var(--c-accent);
+  --color-spotify-strong: var(--c-accent-strong);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-hoverfill: var(--c-hover);
 }
 
 html,
@@ -21,15 +76,24 @@ body {
 }
 
 body {
-  background: #000;
-  color: #fff;
+  background: var(--c-page);
+  color: var(--c-ink);
   overscroll-behavior: none;
 }
 
-/* Scrollbar tipis ala aplikasi Spotify. */
+/* Ikut sertakan tema pada widget native (form, scrollbar bawaan). */
+html {
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* Scrollbar tipis ala aplikasi Spotify — warna mengikuti tema. */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+  scrollbar-color: var(--c-line-strong) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -42,12 +106,12 @@ body {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.28);
+  background-color: var(--c-line-strong);
   border-radius: 9999px;
   border: 3px solid transparent;
   background-clip: content-box;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.45);
+  background-color: var(--c-ink);
 }

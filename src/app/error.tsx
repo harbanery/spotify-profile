@@ -18,8 +18,8 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-black px-6 text-center">
-      <h2 className="text-2xl font-bold text-white">{t("error.title")}</h2>
+    <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-page px-6 text-center">
+      <h2 className="text-2xl font-bold text-ink">{t("error.title")}</h2>
       <p className="max-w-md text-sm text-subdued">
         {error.message || t("error.fallback")}
       </p>

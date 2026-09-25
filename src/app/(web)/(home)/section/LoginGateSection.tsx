@@ -58,7 +58,7 @@ export default function LoginGateSection({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+          <h1 className="text-3xl font-black tracking-tight text-ink md:text-4xl">
             {t("loginGate.title")}
           </h1>
           <p className="text-sm text-subdued">{t("loginGate.description")}</p>

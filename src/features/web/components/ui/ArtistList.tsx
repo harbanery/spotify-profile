@@ -18,7 +18,7 @@ export default function ArtistList({ artists }: ArtistListProps) {
       {artists.map((artist) => (
         <li
           key={artist.id}
-          className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-white/5"
+          className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-hoverfill"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -29,7 +29,7 @@ export default function ArtistList({ artists }: ArtistListProps) {
             className="size-12 shrink-0 rounded-full object-cover"
           />
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-white">
+            <p className="truncate text-sm font-medium text-ink">
               {artist.name}
             </p>
           </div>

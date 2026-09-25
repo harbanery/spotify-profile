@@ -12,12 +12,12 @@ interface ProfileSectionProps {
 }
 
 /**
- * Header profil ala Spotify: avatar bulat besar di atas gradasi hijau
- * (warna primer Spotify), konten selebar max-w-4xl di tengah. Saat
- * login, data dummy diganti profil akun Spotify asli pengguna. Kartu
- * "Now Playing" hidup di section terpisah (NowPlayingSection); navbar
- * (fixed, mengikuti scroll) memuat toggle bahasa, toggle tema, dan
- * tombol login/logout.
+ * Header profil ala Spotify: avatar bulat besar di atas gradasi aksen
+ * ke base (warna mengikuti tema aktif), konten selebar max-w-4xl di
+ * tengah. Saat login, data dummy diganti profil akun Spotify asli
+ * pengguna. Kartu "Now Playing" hidup di section terpisah
+ * (NowPlayingSection); navbar (fixed, mengikuti scroll) memuat toggle
+ * bahasa, toggle tema, dan tombol login/logout.
  */
 export default function ProfileSection({ user }: ProfileSectionProps) {
   const { status, user: sessionUser } = useWebSession();
@@ -31,7 +31,8 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
         aria-hidden
         className="absolute inset-x-0 top-0 h-80"
         style={{
-          background: "linear-gradient(180deg, #1ed760 0%, #121212 100%)",
+          background:
+            "linear-gradient(180deg, var(--c-accent) 0%, var(--c-base) 100%)",
         }}
       />
       <div className="relative w-full max-w-4xl mx-auto flex flex-col gap-6 px-4 pt-10 pb-8 md:px-6 md:pt-16">
@@ -45,10 +46,10 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             className="size-36 rounded-full object-cover shadow-2xl md:size-52"
           />
           <div className="min-w-0">
-            <h1 className="mt-2 text-5xl font-black tracking-tight text-white md:text-8xl">
+            <h1 className="mt-2 text-5xl font-black tracking-tight text-ink md:text-8xl">
               {profile.displayName}
             </h1>
-            <p className="mt-4 text-sm text-white/80">
+            <p className="mt-4 text-sm text-ink/80">
               {profile.handle}
               {profile.publicPlaylists > 0 &&
                 ` • ${t("profile.publicPlaylists", {
