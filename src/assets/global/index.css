@@ -21,11 +21,16 @@
   --c-subdued: #b3b3b3;
   --c-accent: #1ed760;
   --c-accent-strong: #1db954;
+  --c-brand: #1ed760;
+  --c-brand-strong: #1db954;
+  --c-brand-ink: #000000;
   --c-line: rgba(255, 255, 255, 0.1);
   --c-line-strong: rgba(255, 255, 255, 0.3);
   --c-hover: rgba(255, 255, 255, 0.06);
 }
 
+/* Dark: gradient GELAP — aksen biru digelapkan jadi navy tua (bukan biru
+   terang); tombol primary navy dengan teks terang. */
 [data-theme="dark"] {
   --c-page: #09090b;
   --c-base: #18181b;
@@ -33,22 +38,31 @@
   --c-raised: #3f3f46;
   --c-ink: #fafafa;
   --c-subdued: #a1a1aa;
-  --c-accent: #60a5fa;
-  --c-accent-strong: #3b82f6;
+  --c-accent: #1e3a8a;
+  --c-accent-strong: #1d4ed8;
+  --c-brand: #1e3a8a;
+  --c-brand-strong: #1d4ed8;
+  --c-brand-ink: #ffffff;
   --c-line: rgba(255, 255, 255, 0.12);
   --c-line-strong: rgba(255, 255, 255, 0.35);
   --c-hover: rgba(255, 255, 255, 0.07);
 }
 
+/* Light: gradient TERANG — hijau jadi putih (gradasi profil putih → abu
+   sangat muda); tombol primary menyesuaikan jadi gelap dengan teks
+   terang, dekorasi aksen memakai ink gelap agar tetap terlihat. */
 [data-theme="light"] {
   --c-page: #ffffff;
-  --c-base: #ffffff;
-  --c-elevated: #f4f4f5;
+  --c-base: #f4f4f5;
+  --c-elevated: #ffffff;
   --c-raised: #e4e4e7;
   --c-ink: #18181b;
   --c-subdued: #52525b;
-  --c-accent: #1db954;
-  --c-accent-strong: #12813b;
+  --c-accent: #ffffff;
+  --c-accent-strong: #f4f4f5;
+  --c-brand: #18181b;
+  --c-brand-strong: #27272a;
+  --c-brand-ink: #ffffff;
   --c-line: rgba(24, 24, 27, 0.1);
   --c-line-strong: rgba(24, 24, 27, 0.3);
   --c-hover: rgba(24, 24, 27, 0.05);
@@ -63,8 +77,9 @@
   --color-raised: var(--c-raised);
   --color-ink: var(--c-ink);
   --color-subdued: var(--c-subdued);
-  --color-spotify: var(--c-accent);
-  --color-spotify-strong: var(--c-accent-strong);
+  --color-spotify: var(--c-brand);
+  --color-spotify-strong: var(--c-brand-strong);
+  --color-spotify-ink: var(--c-brand-ink);
   --color-line: var(--c-line);
   --color-line-strong: var(--c-line-strong);
   --color-hoverfill: var(--c-hover);

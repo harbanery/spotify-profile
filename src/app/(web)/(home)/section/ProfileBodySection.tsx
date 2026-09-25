@@ -189,7 +189,7 @@ export default function ProfileBodySection({
               onClick={() => setTimeRange(term.value)}
               className={
                 timeRange === term.value
-                  ? "bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!"
+                  ? "bg-spotify! text-spotify-ink! hover:bg-spotify-strong! hover:text-spotify-ink!"
                   : "border-line-strong! bg-transparent! text-ink! hover:border-ink! hover:text-ink!"
               }
             >
@@ -208,7 +208,7 @@ export default function ProfileBodySection({
               onClick={() => setLayout(mode.value)}
               className={
                 layout === mode.value
-                  ? "bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!"
+                  ? "bg-spotify! text-spotify-ink! hover:bg-spotify-strong! hover:text-spotify-ink!"
                   : "border-line-strong! bg-transparent! text-ink! hover:border-ink! hover:text-ink!"
               }
             >

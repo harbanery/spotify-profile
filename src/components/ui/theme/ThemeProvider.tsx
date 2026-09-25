@@ -14,8 +14,8 @@ import { useStoredPreference } from "@/hooks/useStoredPreference";
  * Tema global (halaman + antd). Mode yang tersedia (dipilih via
  * ThemeToggle di navbar):
  * - "spotify" (default): tampilan asli halaman — gelap, aksen hijau.
- * - "dark": gelap netral, aksen biru.
- * - "light": terang, aksen hijau tua.
+ * - "dark": gradient gelap — aksen biru digelapkan jadi navy tua.
+ * - "light": gradient terang — hijau jadi putih, primary gelap + teks terang.
  * - "compact": palet spotify dengan density komponen antd kompak.
  * Tema diterapkan dua lapis: atribut data-theme di <html> mengganti CSS
  * variable palet halaman (assets/global/index.css — inilah yang membuat
@@ -69,7 +69,8 @@ const buildThemeConfig = (mode: ThemeMode) => {
       return {
         algorithm: antdTheme.darkAlgorithm,
         token: {
-          colorPrimary: "#3b82f6",
+          // Biru digelapkan jadi navy — selaras aksen CSS variable tema.
+          colorPrimary: "#1e3a8a",
           colorBgBase: "#18181b",
           colorText: "#fafafa",
           colorTextSecondary: "#a1a1aa",
@@ -82,7 +83,8 @@ const buildThemeConfig = (mode: ThemeMode) => {
       return {
         algorithm: antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: "#1db954",
+          // Primary gelap dengan teks terang (teks dihitung antd otomatis).
+          colorPrimary: "#18181b",
           colorBgBase: "#ffffff",
           colorText: "#18181b",
           colorTextSecondary: "#52525b",

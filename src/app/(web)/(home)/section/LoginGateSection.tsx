@@ -54,7 +54,7 @@ export default function LoginGateSection({
     <div className="flex h-dvh flex-col items-center justify-center overflow-y-auto bg-gradient-to-b from-[#1e3264] via-base to-base px-6 py-10 text-center scrollbar-thin">
       <div className="flex w-full max-w-sm flex-col items-center gap-8">
         <div className="flex size-20 items-center justify-center rounded-full bg-spotify shadow-2xl">
-          <CustomerServiceOutlined className="text-4xl! text-black!" />
+          <CustomerServiceOutlined className="text-4xl! text-spotify-ink!" />
         </div>
 
         <div className="space-y-2">

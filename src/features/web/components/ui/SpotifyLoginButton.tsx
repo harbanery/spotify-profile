@@ -45,7 +45,7 @@ export default function SpotifyLoginButton({
       href: "/api/web/auth/login",
       icon: <LoginOutlined />,
       className:
-        "bg-spotify! text-black! hover:bg-spotify-strong! hover:text-black!",
+        "bg-spotify! text-spotify-ink! hover:bg-spotify-strong! hover:text-spotify-ink!",
     };
     buttonLabel = t("nav.login");
   }

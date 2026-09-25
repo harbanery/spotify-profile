@@ -120,9 +120,19 @@ const tokenRequestBody = (entries: Record<string, string>): URLSearchParams => {
   return body;
 };
 
+/**
+ * Hasil permintaan token: `tokens` null bila gagal; `rejected` menandai
+ * penolakan EKSPLISIT dari server (4xx, mis. refresh token invalid) —
+ * beda dari kegagalan jaringan sesaat (hardening P1: S9).
+ */
+interface TokenRequestResult {
+  tokens: SpotifyTokenResponse | null;
+  rejected: boolean;
+}
+
 const requestTokens = async (
   body: URLSearchParams,
-): Promise<SpotifyTokenResponse | null> => {
+): Promise<TokenRequestResult> => {
   try {
     const response = await fetch(`${SPOTIFY_ACCOUNTS_BASE}/api/token`, {
       method: "POST",
@@ -130,10 +140,13 @@ const requestTokens = async (
       body,
       cache: "no-store",
     });
-    if (!response.ok) return null;
-    return (await response.json()) as SpotifyTokenResponse;
+    if (!response.ok) return { tokens: null, rejected: true };
+    return {
+      tokens: (await response.json()) as SpotifyTokenResponse,
+      rejected: false,
+    };
   } catch {
-    return null;
+    return { tokens: null, rejected: false };
   }
 };
 
@@ -144,7 +157,7 @@ export const exchangeCodeForTokens = async (
   codeVerifier: string,
   redirectUri: string,
 ): Promise<SpotifySession | null> => {
-  const tokens = await requestTokens(
+  const { tokens } = await requestTokens(
     tokenRequestBody({
       grant_type: "authorization_code",
       code,
@@ -163,10 +176,11 @@ export const exchangeCodeForTokens = async (
   };
 };
 
-/** Perbarui access token memakai refresh token. */
-export const refreshSpotifyToken = async (
+/** Perbarui access token memakai refresh token (detail: lihat
+ *  TokenRequestResult — penolakan eksplisit vs kegagalan jaringan). */
+export const refreshSpotifyToken = (
   refreshToken: string,
-): Promise<SpotifyTokenResponse | null> =>
+): Promise<TokenRequestResult> =>
   requestTokens(
     tokenRequestBody({
       grant_type: "refresh_token",
@@ -300,6 +314,17 @@ export const isSessionCookieUsable = (raw: string | undefined): boolean => {
   }
 };
 
+/** Refresh yang sedang berjalan — kunci per refresh token (single-flight). */
+const refreshInFlight = new Map<string, Promise<string | null>>();
+
+/**
+ * Access token yang siap dipakai: refresh otomatis saat hampir kedaluwarsa.
+ * Hardening P1: single-flight (P7) — route handler yang berjalan paralel
+ * berbagi SATU refresh (refresh storm bisa memicu invalidasi token lama
+ * oleh Spotify). Refresh token yang ditolak eksplisit server (S9)
+ * membersihkan sesi agar pengguna kembali ke gerbang login alih-alih
+ * loop retry dengan token mati; kegagalan jaringan sesaat tidak.
+ */
 export const getValidAccessToken = async (): Promise<string | null> => {
   const session = await readSpotifySession();
   if (!session) return null;
@@ -310,17 +335,35 @@ export const getValidAccessToken = async (): Promise<string | null> => {
 
   if (!session.refreshToken) return null;
 
-  const refreshed = await refreshSpotifyToken(session.refreshToken);
-  if (!refreshed) return null;
+  const key = session.refreshToken.slice(-16);
+  const existing = refreshInFlight.get(key);
+  if (existing) return existing;
 
-  const nextSession: SpotifySession = {
-    ...session,
-    accessToken: refreshed.access_token,
-    refreshToken: refreshed.refresh_token ?? session.refreshToken,
-    expiresAt: Date.now() + refreshed.expires_in * 1000,
-  };
-  await persistSpotifySession(nextSession);
-  return nextSession.accessToken;
+  const task = (async () => {
+    const { tokens: refreshed, rejected } = await refreshSpotifyToken(
+      session.refreshToken,
+    );
+    if (!refreshed) {
+      // S9: hanya bersihkan sesi bila server menolak token (bukan gangguan
+      // jaringan sesaat) — cookie dihapus, permintaan berikutnya 401.
+      if (rejected) await clearSpotifySession();
+      return null;
+    }
+
+    const nextSession: SpotifySession = {
+      ...session,
+      accessToken: refreshed.access_token,
+      refreshToken: refreshed.refresh_token ?? session.refreshToken,
+      expiresAt: Date.now() + refreshed.expires_in * 1000,
+    };
+    await persistSpotifySession(nextSession);
+    return nextSession.accessToken;
+  })().finally(() => {
+    refreshInFlight.delete(key);
+  });
+
+  refreshInFlight.set(key, task);
+  return task;
 };
 
 /** Jeda singkat (ms) antar percobaan ulang. */
