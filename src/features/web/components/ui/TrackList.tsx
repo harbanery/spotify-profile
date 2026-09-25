@@ -8,8 +8,10 @@ interface TrackListProps {
 }
 
 /**
- * Daftar lagu vertikal ala Spotify, tiap baris kiri-ke-kanan:
+ * Daftar lagu vertikal ala Spotify (mode list): tiap baris kiri-ke-kanan
  * cover album, lalu judul lagu dengan nama artis sebagai subjudul.
+ * Berdiri sebagai kolom kanan pada grid 2 kolom mode list (top artists
+ * di kiri); turun menjadi 1 kolom di resolusi tablet/hp.
  */
 export default function TrackList({ tracks }: TrackListProps) {
   return (

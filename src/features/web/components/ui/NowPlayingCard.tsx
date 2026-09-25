@@ -2,6 +2,7 @@
 
 import type { NowPlaying } from "@/services/player";
 import { displayImage } from "@/utils/helpers";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 interface NowPlayingCardProps {
   nowPlaying: NowPlaying;
@@ -15,9 +16,10 @@ interface NowPlayingCardProps {
  * artis, dan playlist asal pemutaran di bawahnya). Tanpa durasi dan bar
  * progres; data segar (lagu berganti/play/pause) dijaga section lewat
  * polling. Lebar sebesar tablet (max-w-2xl); posisi tengah ditangani
- * section pembungkusnya.
+ * section pembungkusnya. Label mengikuti locale aktif.
  */
 export default function NowPlayingCard({ nowPlaying }: NowPlayingCardProps) {
+  const { t } = useLocale();
   const { track, isPlaying } = nowPlaying;
 
   return (
@@ -43,7 +45,7 @@ export default function NowPlayingCard({ nowPlaying }: NowPlayingCardProps) {
               <span className="relative inline-flex size-2 rounded-full bg-spotify" />
             </span>
           ) : null}
-          {isPlaying ? "Now playing" : "Last playing"}
+          {isPlaying ? t("nowPlaying.now") : t("nowPlaying.last")}
         </p>
         <div className="min-w-0">
           <p className="mt-1 truncate text-xl font-bold text-white md:text-2xl">
@@ -53,7 +55,7 @@ export default function NowPlayingCard({ nowPlaying }: NowPlayingCardProps) {
         </div>
         {nowPlaying.playlist ? (
           <p className="mt-1 truncate text-xs text-subdued">
-            From{" "}
+            {t("nowPlaying.from")}{" "}
             <span className="font-semibold text-white">
               {nowPlaying.playlist}
             </span>

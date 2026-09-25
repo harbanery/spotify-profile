@@ -1,16 +1,11 @@
 import type { Playlist } from "@/features/web/types";
 import { OWNER_NAME } from "@/utils/config/variables";
-import { displayImage } from "@/utils/helpers";
-import { fetchSpotifyApi } from "@/lib/spotify";
-import {
-  getTracksByIds,
-  mapSpotifyTrack,
-  type SpotifyTrackItem,
-} from "./track";
+import { getTracksByIds } from "./track";
 
 /**
- * Data playlist dummy. Dipakai saat belum login Spotify;
- * setelah login, halaman memakai getMyPlaylists (Spotify Web API).
+ * Data playlist dummy — kini hanya menopang jumlah "public playlists"
+ * pada profil dummy (fitur Top playlists dan halaman playlist sudah
+ * di-takeout; playlist live tidak lagi diambil dari Spotify Web API).
  */
 const PLAYLISTS: Playlist[] = [
   {
@@ -106,108 +101,16 @@ const PLAYLISTS: Playlist[] = [
   },
 ];
 
-export const getPlaylists = (): Playlist[] => PLAYLISTS;
-
-export const getPlaylistById = (id: string): Playlist | undefined =>
-  PLAYLISTS.find((playlist) => playlist.id === id);
-
 /** Total pemutaran playlist dummy = jumlah plays lagu-lagunya. */
 const totalPlays = (playlist: Playlist): number =>
   (playlist.tracks ?? []).reduce((sum, track) => sum + (track.plays ?? 0), 0);
 
 /**
  * Playlist publik dummy terurut dari yang paling sering didengar
- * (dihitung dari jumlah pemutaran lagu di dalam tiap playlist).
+ * (dihitung dari jumlah pemutaran lagu di dalam tiap playlist) —
+ * dipakai service profile untuk jumlah "public playlists".
  */
 export const getPublicPlaylists = (): Playlist[] =>
   [...PLAYLISTS]
     .filter((playlist) => playlist.owner !== "Spotify")
     .sort((a, b) => totalPlays(b) - totalPlays(a));
-
-/** Bentuk mentah playlist (list) dari Spotify Web API. */
-interface SpotifyPlaylistItem {
-  id: string;
-  name: string;
-  description?: string;
-  images?: Array<{ url: string }>;
-  owner?: { display_name?: string };
-}
-
-/** Bentuk mentah detail playlist dengan track-nya. */
-interface SpotifyPlaylistDetail extends SpotifyPlaylistItem {
-  tracks?: {
-    items?: Array<{ track: SpotifyTrackItem | null }>;
-  };
-}
-
-interface SpotifyPlaylistsPage {
-  items: SpotifyPlaylistItem[];
-}
-
-/** Warna aksen default untuk header playlist live. */
-const LIVE_PLAYLIST_COLOR = "#1e3264";
-
-/** Peta playlist live ke tipe domain. */
-const mapLivePlaylist = (playlist: SpotifyPlaylistItem): Playlist => ({
-  id: playlist.id,
-  name: playlist.name,
-  description: playlist.description ?? "",
-  cover: displayImage(playlist.images?.[0]?.url),
-  color: LIVE_PLAYLIST_COLOR,
-  owner: playlist.owner?.display_name ?? "Spotify",
-});
-
-/**
- * Playlist milik user yang login (Spotify Web API): cukup data
- * /me/playlists — tanpa time range, runInBatches, atau pembacaan isi
- * playlist (playlist items). console.log hasil fetch sengaja
- * dibiarkan satu-satunya di file ini untuk mengecek di terminal
- * apakah fetch masih berjalan.
- * Endpoint list tidak menyertakan isi lagu — tracks diisi saat detail.
- */
-export const getMyPlaylists = async (
-  accessToken: string,
-  limit = 50,
-): Promise<Playlist[] | null> => {
-  const page = await fetchSpotifyApi<SpotifyPlaylistsPage>(
-    `/me/playlists?limit=${limit}`,
-    accessToken,
-  );
-  console.log({ playlistsPage: page });
-  if (!page) return null;
-  return page.items
-    .filter((playlist) => Boolean(playlist?.id))
-    .map(mapLivePlaylist);
-};
-
-/**
- * Detail satu playlist via Spotify Web API (halaman /playlist/[id] live).
- * Catatan: skeleton ini hanya memuat halaman track pertama (maks 100 lagu).
- */
-export const getPlaylistLive = async (
-  id: string,
-  accessToken: string,
-): Promise<Playlist | null> => {
-  const detail = await fetchSpotifyApi<SpotifyPlaylistDetail>(
-    `/playlists/${encodeURIComponent(id)}`,
-    accessToken,
-  );
-  if (!detail) return null;
-
-  const tracks = (detail.tracks?.items ?? [])
-    .map((item) => item.track)
-    .filter((track): track is SpotifyTrackItem =>
-      Boolean(track?.id && track.name),
-    )
-    .map(mapSpotifyTrack);
-
-  return {
-    id: detail.id,
-    name: detail.name,
-    description: detail.description ?? "",
-    cover: displayImage(detail.images?.[0]?.url),
-    color: LIVE_PLAYLIST_COLOR,
-    owner: detail.owner?.display_name ?? "Spotify",
-    tracks,
-  };
-};

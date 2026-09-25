@@ -3,18 +3,17 @@
 import { Alert } from "antd";
 import { CustomerServiceOutlined } from "@ant-design/icons";
 import SpotifyLoginButton from "@/features/web/components/ui/SpotifyLoginButton";
+import { useLocale } from "@/components/i18n/LocaleProvider";
+import type { TranslationKey } from "@/components/i18n/translations";
 
-/** Pesan ramah untuk tiap kode ?auth_error dari route handler auth. */
-const AUTH_ERROR_MESSAGES: Record<string, string> = {
-  unconfigured:
-    "Kredensial Spotify belum dikonfigurasi. Isi SPOTIFY_CLIENT_ID di .env.local (lihat .env.example), lalu jalankan ulang npm run dev.",
-  invalid_callback: "Callback login tidak valid. Silakan coba login ulang.",
-  state_mismatch: "Parameter state tidak cocok. Silakan coba login ulang.",
-  token_exchange_failed:
-    "Gagal menukar kode autorisasi dengan token. Silakan coba lagi.",
-  access_denied: "Login dibatalkan atau akses ditolak.",
-  unregistered_origin:
-    "Halaman ini dibuka dari origin yang belum terdaftar di Spotify.",
+/** Kode ?auth_error dari route handler auth → key terjemahan pesan. */
+const AUTH_ERROR_KEYS: Record<string, TranslationKey> = {
+  unconfigured: "authError.unconfigured",
+  invalid_callback: "authError.invalidCallback",
+  state_mismatch: "authError.stateMismatch",
+  token_exchange_failed: "authError.tokenExchange",
+  access_denied: "authError.accessDenied",
+  unregistered_origin: "authError.unregisteredOrigin",
 };
 
 interface LoginGateSectionProps {
@@ -32,19 +31,23 @@ const safeOrigin = (origin?: string): string | null => {
 /**
  * Gerbang login di beranda: tampilan ala halaman login satu layar penuh
  * (h-screen) saat belum login Spotify — statistik personal muncul setelah
- * masuk. Web ini read-only, bukan media player.
+ * masuk. Web ini read-only, bukan media player. Teks mengikuti locale
+ * aktif (LanguageToggle di navbar halaman login-nya tidak tampil, jadi
+ * default "en" berlaku di sini).
  */
 export default function LoginGateSection({
   authError,
   origin,
 }: LoginGateSectionProps) {
+  const { t } = useLocale();
   const rejectedOrigin = safeOrigin(origin);
-  const errorMessage = authError
-    ? (AUTH_ERROR_MESSAGES[authError] ?? AUTH_ERROR_MESSAGES.invalid_callback)
+  const errorKey = authError
+    ? (AUTH_ERROR_KEYS[authError] ?? AUTH_ERROR_KEYS.invalid_callback)
     : null;
+  const errorMessage = errorKey ? t(errorKey) : null;
   const detail =
     authError === "unregistered_origin" && rejectedOrigin
-      ? `Origin ${rejectedOrigin} belum terdaftar. Tambahkan ${rejectedOrigin}/api/web/auth/callback ke Redirect URIs di Spotify Developer Dashboard dan SPOTIFY_REDIRECT_URIS di .env.local, atau buka aplikasi lewat origin yang sudah terdaftar.`
+      ? t("authError.unregisteredOriginDetail", { origin: rejectedOrigin })
       : null;
 
   return (
@@ -56,13 +59,9 @@ export default function LoginGateSection({
 
         <div className="space-y-2">
           <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
-            Log in to Spotify Profile
+            {t("loginGate.title")}
           </h1>
-          <p className="text-sm text-subdued">
-            Masuk dengan akun Spotify untuk melihat statistik personalmu: lagu
-            yang sedang diputar, lagu dan artis teratas, serta playlist yang
-            sering kamu dengar.
-          </p>
+          <p className="text-sm text-subdued">{t("loginGate.description")}</p>
         </div>
 
         {errorMessage ? (
@@ -79,8 +78,7 @@ export default function LoginGateSection({
         <SpotifyLoginButton size="large" />
 
         <p className="text-xs leading-relaxed text-subdued">
-          Akses bersifat baca-saja (read-only). Web ini bukan media player —
-          tidak ada pemutaran lagu atau perubahan pada akun Spotify-mu.
+          {t("loginGate.note")}
         </p>
       </div>
     </div>

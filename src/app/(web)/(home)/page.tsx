@@ -5,7 +5,6 @@ import ProfileBodySection from "./section/ProfileBodySection";
 import LoginGateSection from "./section/LoginGateSection";
 import WebFooter from "@/features/web/components/layout/footer/WebFooter";
 import { getProfile } from "@/services/profile";
-import { getPublicPlaylists } from "@/services/playlist";
 import { getTopArtists } from "@/services/artist";
 import { getTopTracks } from "@/services/track";
 import { isSessionViable, readSpotifySession } from "@/lib/spotify";
@@ -42,7 +41,6 @@ export default async function HomePage({
       <ProfileBodySection
         topTracks={getTopTracks(5)}
         topArtists={getTopArtists(5)}
-        playlists={getPublicPlaylists()}
       />
       <WebFooter />
     </div>

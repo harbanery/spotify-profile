@@ -3,6 +3,7 @@
 import type { UserProfile } from "@/features/web/types";
 import { formatCount } from "@/utils/helpers";
 import { useWebSession } from "@/features/web/hooks/session";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 import WebNavbar from "@/features/web/components/layout/navbar/WebNavbar";
 
 interface ProfileSectionProps {
@@ -14,11 +15,13 @@ interface ProfileSectionProps {
  * Header profil ala Spotify: avatar bulat besar di atas gradasi hijau
  * (warna primer Spotify), konten selebar max-w-4xl di tengah. Saat
  * login, data dummy diganti profil akun Spotify asli pengguna. Kartu
- * "Now Playing" hidup di section terpisah (NowPlayingSection); tombol
- * login/logout ada di WebNavbar (fixed, mengikuti scroll).
+ * "Now Playing" hidup di section terpisah (NowPlayingSection); navbar
+ * (fixed, mengikuti scroll) memuat toggle bahasa, toggle tema, dan
+ * tombol login/logout.
  */
 export default function ProfileSection({ user }: ProfileSectionProps) {
   const { status, user: sessionUser } = useWebSession();
+  const { t } = useLocale();
   const profile =
     status === "authenticated" && sessionUser ? sessionUser : user;
 
@@ -48,16 +51,19 @@ export default function ProfileSection({ user }: ProfileSectionProps) {
             <p className="mt-4 text-sm text-white/80">
               {profile.handle}
               {profile.publicPlaylists > 0 &&
-                ` • ${profile.publicPlaylists} public playlists`}
+                ` • ${t("profile.publicPlaylists", {
+                  count: profile.publicPlaylists,
+                })}`}
               {profile.followers > 0 &&
-                ` • ${formatCount(profile.followers)} followers`}
+                ` • ${t("profile.followers", {
+                  count: formatCount(profile.followers),
+                })}`}
             </p>
           </div>
         </div>
       </div>
       {/* overflow-hidden mengurung gradasi dekoratif: tanpa ini gradasi
-          (positioned) melukis di atas konten statis section berikutnya dan
-          menutupi ~50% judul "Top tracks". */}
+          (positioned) melukis di atas konten statis section berikutnya. */}
       <WebNavbar />
     </section>
   );
