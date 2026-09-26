@@ -12,6 +12,19 @@ export const metadata: Metadata = {
     template: `%s | ${APP_NAME}`,
   },
   description: APP_DESCRIPTION,
+  icons: [
+    {
+      rel: "icon",
+      type: "image/x-icon",
+      url: `/favicon.ico`,
+      sizes: "any",
+    },
+    {
+      rel: "shortcut icon",
+      type: "image/x-icon",
+      url: `/favicon.ico`,
+    },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
